@@ -10,22 +10,11 @@ export default bexContent((bridge) => {
   // This can talk to background.js
   // This is the only one being able to talk to the local dom.js
 
-  log('content script active', Date.now())
+  log('active', Date.now())
 
   bridge.on('forwarded-ui-action', async evt => {
     log('got forwarded-ui-action, pinging dom')
     bridge.send('do-dom-manipulation')
     evt.respond()
   })
-
-  bridge.on('hello-content', (evt) => {
-    log('received hello from', evt.data)
-    evt.respond()
-  })
-
-  setTimeout(() => {
-    bridge.send('hello-ui', 'content')
-    bridge.send('hello-dom', 'content')
-    bridge.send('hello-bg', 'content')
-  }, 500)
 })

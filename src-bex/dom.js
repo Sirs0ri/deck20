@@ -33,28 +33,6 @@ export default bexDom(async (bridge) => {
     evt.respond()
   })
 
-  bridge.on('hello-dom', (evt) => {
-    log('received hello from', evt.data)
-    evt.respond()
-  })
-
-  setTimeout(() => {
-    bridge.send('hello-bg', 'dom')
-    bridge.send('hello-content', 'dom')
-    bridge.send('hello-ui', 'dom')
-  }, 500)
-
-  // bridge.send('test', 'dom')
-
-  // bridge.on('extension_icon_clicked', ({ data, respond }) => {
-  //   log('Extension icon clicked!')
-  //   respond()
-  // })
-  // bridge.on('frontend_icon_clicked.bg', ({ data, respond }) => {
-  //   log('Frontend icon clicked!')
-  //   respond()
-  // })
-
   log('BEX Injected')
 
   getChat().then(() => {

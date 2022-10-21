@@ -28,21 +28,6 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     evt.respond()
   })
 
-  bridge.on('hello-bg', (evt) => {
-    log('received hello from', evt.data)
-    evt.respond()
-  })
-
-  // bridge.on("hello-content")
-
-  setTimeout(() => {
-    bridge.send('hello-dom', 'background')
-    bridge.send('hello-content', 'background')
-    bridge.send('hello-ui', 'background')
-  }, 500)
-
-  // bridge.send('test', 'background')
-
   bridge.on('log', ({ data, respond }) => {
     console.log(`[BEX] ${data.message}`, ...(data.data || []))
     respond()

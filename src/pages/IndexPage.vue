@@ -24,34 +24,16 @@ export default defineComponent({
   setup () {
     const $q = useQuasar()
 
-    function onButtonClick () {
-      $q.bex.send('hello-content', 'ui')
-      $q.bex.send('hello-dom', 'ui')
-      $q.bex.send('hello-bg', 'ui')
-
-      log('sending ui action')
-      $q.bex.send('ui-called-action')
-    }
-
     // This can talk to background
     // There is no locally running content script, since it's not an allowlisted origin
     // There is no access to other content scripts.
     // There is no access to dom scripts
-
-    $q.bex.on('hello-ui', (evt) => {
-      log('received hello from', evt.data)
-      evt.respond()
-    })
+    function onButtonClick () {
+      $q.bex.send('ui-called-action')
+    }
 
     onMounted(() => {
       log('mounted')
-
-      setTimeout(() => {
-        onButtonClick()
-      }, 500)
-
-      // $q.bex.send('test', 'ui')
-      // $q.bex.send('echo', { key: 'test', data: 'ui' })
     })
 
     return {
