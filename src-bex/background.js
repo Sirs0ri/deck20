@@ -1,5 +1,7 @@
 import { bexBackground } from 'quasar/wrappers'
 
+const log = (...args) => console.log('[bex] background', ...args)
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.action.onClicked.addListener((/* tab */) => {
     // Opens our extension in a new browser window.
@@ -13,6 +15,34 @@ chrome.runtime.onInstalled.addListener(() => {
 })
 
 export default bexBackground((bridge /* , allActiveConnections */) => {
+  // This runs in the background, when ever there is a bridge.
+  // This can talk to the UI from src/
+  // this can talk to content scripts inside a tab
+  // This can not talk to dom.js
+
+  log('active', Date.now())
+
+  bridge.on('ui-called-action', evt => {
+    log('forwarding UI action')
+    bridge.send('forwarded-ui-action')
+    evt.respond()
+  })
+
+  bridge.on('hello-bg', (evt) => {
+    log('received hello from', evt.data)
+    evt.respond()
+  })
+
+  // bridge.on("hello-content")
+
+  setTimeout(() => {
+    bridge.send('hello-dom', 'background')
+    bridge.send('hello-content', 'background')
+    bridge.send('hello-ui', 'background')
+  }, 500)
+
+  // bridge.send('test', 'background')
+
   bridge.on('log', ({ data, respond }) => {
     console.log(`[BEX] ${data.message}`, ...(data.data || []))
     respond()

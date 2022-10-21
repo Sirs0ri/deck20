@@ -3,18 +3,29 @@
 
 import { bexContent } from 'quasar/wrappers'
 
-export default bexContent((/* bridge */) => {
-  // Hook into the bridge to listen for events sent from the client BEX.
-  /*
-  bridge.on('some.event', event => {
-    if (event.data.yourProp) {
-      // Access a DOM element from here.
-      // Document in this instance is the underlying website the contentScript runs on
-      const el = document.getElementById('some-id')
-      if (el) {
-        el.value = 'Quasar Rocks!'
-      }
-    }
+const log = (...args) => console.log('[bex] content', ...args)
+
+export default bexContent((bridge) => {
+  // This runs in the context of a tab with an allowlisted origin
+  // This can talk to background.js
+  // This is the only one being able to talk to the local dom.js
+
+  log('content script active', Date.now())
+
+  bridge.on('forwarded-ui-action', async evt => {
+    log('got forwarded-ui-action, pinging dom')
+    bridge.send('do-dom-manipulation')
+    evt.respond()
   })
-  */
+
+  bridge.on('hello-content', (evt) => {
+    log('received hello from', evt.data)
+    evt.respond()
+  })
+
+  setTimeout(() => {
+    bridge.send('hello-ui', 'content')
+    bridge.send('hello-dom', 'content')
+    bridge.send('hello-bg', 'content')
+  }, 500)
 })
