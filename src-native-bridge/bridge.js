@@ -8,9 +8,8 @@
 // This script opens a webserver on port localhost:8000 via express, which will
 // listen to POST requests and forward them to the BEX.
 
-// const fs = require("fs")
-// const path = require("path")
-
+const fs = require("fs")
+const path = require("path")
 const express = require("express")
 
 const host = "localhost"
@@ -18,20 +17,20 @@ const port = 8000
 
 // Use this to create a log file:
 const log = (args) => {
-  // if (!fs.existsSync(path.resolve(__dirname, "message.txt"))) {
-  //   const data = new Uint8Array(Buffer.from(""))
-  //   fs.writeFileSync(path.resolve(__dirname, "message.txt"), data)
-  // }
+  if (!fs.existsSync(path.resolve(__dirname, "message.txt"))) {
+    const data = new Uint8Array(Buffer.from(""))
+    fs.writeFileSync(path.resolve(__dirname, "message.txt"), data)
+  }
 
-  // if (args instanceof Array) {
-  //   for (const arg of args) {
-  //     const data = new Uint8Array(Buffer.from(`${arg}\n`))
-  //     fs.appendFileSync(path.resolve(__dirname, "message.txt"), data)
-  //   }
-  // } else if (args) {
-  //   const data = new Uint8Array(Buffer.from(`${args}\n`))
-  //   fs.appendFileSync(path.resolve(__dirname, "message.txt"), data)
-  // }
+  if (args instanceof Array) {
+    for (const arg of args) {
+      const data = new Uint8Array(Buffer.from(`${arg}\n`))
+      fs.appendFileSync(path.resolve(__dirname, "message.txt"), data)
+    }
+  } else if (args) {
+    const data = new Uint8Array(Buffer.from(`${args}\n`))
+    fs.appendFileSync(path.resolve(__dirname, "message.txt"), data)
+  }
 }
 
 const sendData = msg => {
@@ -142,5 +141,6 @@ const sendData = msg => {
 
   process.on("exit", () => {
     log("exiting")
+    fs.rmSync(path.resolve(__dirname, "message.txt"))
   })
 })()
