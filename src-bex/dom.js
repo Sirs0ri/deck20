@@ -33,10 +33,17 @@ export default bexDom(async (bridge) => {
   //   // (await chat).doChatInput("/w Max Hello there!")
   //   evt.respond()
   // })
-  bridge.on("forwarded-comm", async evt => {
-    log("got forwarded-comm", evt.data);
-    (await chat).doChatInput(`/w Max ${JSON.stringify(evt.data)}`)
-    evt.respond()
+  bridge.on("forwarded-comm", async ({ data, respond }) => {
+    log("got forwarded-comm", data)
+    switch (data.command) {
+      case "do-message":
+        (await chat).doChatInput(data.data)
+        break
+
+      default:
+        break
+    }
+    respond()
   })
 
   log("Chat connected")
