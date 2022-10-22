@@ -1,6 +1,16 @@
 <template>
   <q-page class="flex flex-center column" style="min-width: 250px; min-height: 300px">
-    <span>Index</span>
+    <q-btn label="BEX" @click="sendBexMessage('ui-called-action')" />
+    <q-btn label="Toggle Server" @click="sendBexMessage('toggle-server')" />
+
+    <span>
+      Server Active: {{ serverActive }}
+    </span>
+    <span>
+      Connected Tabs: {{ connectedTabs }}
+    </span>
+    <!-- <pre>{{ JSON.stringify($q.screen, null, 4) }}</pre>
+    <pre>{{ JSON.stringify($route, null, 4) }}</pre> -->
   </q-page>
 </template>
 

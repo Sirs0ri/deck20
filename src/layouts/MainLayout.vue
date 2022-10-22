@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header v-if="$q.screen.gt.xs" elevated>
       <q-toolbar>
         <q-btn
           flat
@@ -20,6 +20,7 @@
     </q-header>
 
     <q-drawer
+      v-if="$q.screen.gt.xs"
       v-model="leftDrawerOpen"
       show-if-above
       bordered
@@ -42,55 +43,48 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <q-footer
+      v-if="!$q.screen.gt.xs"
+      elevated
+      class="bg-grey-8 text-white"
+    >
+      <q-tabs indicator-color="red" class="text-white">
+        <q-route-tab
+          v-for="link in essentialLinks"
+          :key="link.title"
+          :icon="link.icon"
+          :to="link.link"
+          exact
+        />
+      </q-tabs>
+    </q-footer>
   </q-layout>
 </template>
 
 <script>
 import { defineComponent, ref } from "vue"
 import EssentialLink from "components/EssentialLink.vue"
+import { useQuasar } from "quasar"
 
 const linksList = [
   {
-    title: "Docs",
+    title: "Home",
     caption: "quasar.dev",
-    icon: "school",
-    link: "https://quasar.dev",
+    icon: "sym_o_home",
+    link: "/",
   },
   {
-    title: "Github",
-    caption: "github.com/quasarframework",
-    icon: "code",
-    link: "https://github.com/quasarframework",
+    title: "Calendar",
+    caption: "quasar.dev",
+    icon: "sym_o_today",
+    link: "/calendar",
   },
   {
-    title: "Discord Chat Channel",
-    caption: "chat.quasar.dev",
-    icon: "chat",
-    link: "https://chat.quasar.dev",
-  },
-  {
-    title: "Forum",
-    caption: "forum.quasar.dev",
-    icon: "record_voice_over",
-    link: "https://forum.quasar.dev",
-  },
-  {
-    title: "Twitter",
-    caption: "@quasarframework",
-    icon: "rss_feed",
-    link: "https://twitter.quasar.dev",
-  },
-  {
-    title: "Facebook",
-    caption: "@QuasarFramework",
-    icon: "public",
-    link: "https://facebook.quasar.dev",
-  },
-  {
-    title: "Quasar Awesome",
-    caption: "Community Quasar projects",
-    icon: "favorite",
-    link: "https://awesome.quasar.dev",
+    title: "Server",
+    caption: "quasar.dev",
+    icon: "sym_o_dns",
+    link: "/server",
   },
 ]
 
@@ -102,6 +96,9 @@ export default defineComponent({
   },
 
   setup () {
+    // eslint-disable-next-line no-unused-vars
+    const $q = useQuasar()
+
     const leftDrawerOpen = ref(false)
 
     return {

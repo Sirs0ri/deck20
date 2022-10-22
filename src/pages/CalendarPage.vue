@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex flex-center column" style="min-width: 250px; min-height: 300px">
-    <span>Index</span>
+    <span>Calendar</span>
   </q-page>
 </template>
 
