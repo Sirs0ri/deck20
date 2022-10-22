@@ -1,0 +1,9 @@
+{
+  "name": "de.sirs0ri.roll20deck",
+  "description": "Example host for native messaging",
+  "path": "bridge.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://dodhfdebnfdlnfokpjjfmadaojajlgag/"
+  ]
+}
