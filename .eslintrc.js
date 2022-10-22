@@ -52,25 +52,32 @@ module.exports = {
 
   // add your custom rules here
   rules: {
-    
-    // allow async-await
-    'generator-star-spacing': 'off',
-    // allow paren-less arrow functions
-    'arrow-parens': 'off',
-    'one-var': 'off',
     'no-void': 'off',
-    'multiline-ternary': 'off',
+    'prefer-promise-reject-errors': 'off',
 
-    'import/first': 'off',
+    // Doubleqoutes erzwingen (" statt ')
+    'quotes': ['warn', 'double'],
+    // Kommas am Ende von Objekten hinzufügen, sobals das Objekt mehr als eine Zeile hat
+    'comma-dangle': ['warn', 'always-multiline'],
+
+    'import/order': 'error',
     'import/named': 'error',
     'import/namespace': 'error',
     'import/default': 'error',
     'import/export': 'error',
-    'import/extensions': 'off',
-    'import/no-unresolved': 'off',
-    'import/no-extraneous-dependencies': 'off',
-    
-    'prefer-promise-reject-errors': 'off',
+    'import/extensions': [
+      'warn', 'never',
+      {
+        'vue': 'always',
+        'json': 'always',
+      }
+    ],
+
+    // HTML Tags mit mehr als zwei Vue-Attributen in mehrere Zeilen aufteilen
+    'vue/max-attributes-per-line': ['error', {
+      singleline: 2,
+      multiline: 1,
+    }],
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
