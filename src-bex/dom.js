@@ -1,8 +1,8 @@
 // Hooks added here have a bridge allowing communication between the Web Page and the BEX Content Script.
 // More info: https://quasar.dev/quasar-cli/developing-browser-extensions/dom-hooks
-import { bexDom } from 'quasar/wrappers'
+import { bexDom } from "quasar/wrappers"
 
-const log = (...args) => console.log('[bex] dom', ...args)
+const log = (...args) => console.log("[bex] dom", ...args)
 
 async function getChat () {
   const playerPromise = new Promise((resolve) => {
@@ -23,21 +23,23 @@ export default bexDom(async (bridge) => {
   // This can talk to the local content script.
   // This cannot talk to anything else.
 
-  log('active', Date.now())
+  log("active", Date.now())
 
-  const chat = getChat()
+  const chat = await getChat()
 
-  bridge.on('do-dom-manipulation', async evt => {
-    log('got do-dom-manipulation');
-    (await chat).doChatInput('/w Max Hello there!')
+  // React to forwarded messages from the content script
+  // bridge.on("do-dom-manipulation", async evt => {
+  //   log("got do-dom-manipulation")
+  //   // (await chat).doChatInput("/w Max Hello there!")
+  //   evt.respond()
+  // })
+  bridge.on("forwarded-comm", async evt => {
+    log("got forwarded-comm", evt.data);
+    (await chat).doChatInput(`/w Max ${JSON.stringify(evt.data)}`)
     evt.respond()
   })
 
-  log('BEX Injected')
-
-  getChat().then(() => {
-    log('Chat connected')
-  })
+  log("Chat connected")
 
   /*
   bridge.send('message.to.quasar', {

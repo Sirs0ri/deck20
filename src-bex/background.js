@@ -1,18 +1,11 @@
-import { bexBackground } from 'quasar/wrappers'
+import { bexBackground } from "quasar/wrappers"
 
-const log = (...args) => console.log('[bex] background', ...args)
+const log = (...args) => console.log("[bex] background", ...args)
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.action.onClicked.addListener((/* tab */) => {
-    // Opens our extension in a new browser window.
-    // Only if a popup isn't defined in the manifest.
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('www/index.html')
-    }, (/* newTab */) => {
-      // Tab opened.
-    })
-  })
-})
+// This shares state, theres only ever one background.js
+let serverActive = false
+let port
+let connectedTabs = 0
 
 export default bexBackground((bridge /* , allActiveConnections */) => {
   // This runs in the background, when ever there is a bridge.
@@ -20,24 +13,107 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   // this can talk to content scripts inside a tab
   // This can not talk to dom.js
 
-  log('active', Date.now())
+  log("active", Date.now(), { serverActive })
 
-  bridge.on('ui-called-action', evt => {
-    log('forwarding UI action')
-    bridge.send('forwarded-ui-action')
+  // ========== Native Communication ==========
+  // This uses the "nativeCommunication" feature to start/stop the server
+  // located in src-native-bridge (which is a very basic node.js server).
+  // When opening a "port" to the native app, Chrome starts the node app,
+  // as soon as no connection is active anymore (via port.disconnect()),
+  // Chrome kills the node application automatically.
+
+  function startServer () {
+    if (serverActive) return "Server already running"
+
+    log("starting server...")
+
+    port = chrome.runtime.connectNative("de.sirs0ri.roll20deck")
+
+    // Forward messages received from the server to the bridge
+    port.onMessage.addListener(function (msg) {
+      log("Received", msg)
+      bridge.send("native-comm", msg)
+    })
+
+    port.onDisconnect.addListener(function () {
+      log("Disconnected")
+    })
+
+    updateServerState(true)
+  }
+
+  function stopServer () {
+    if (!serverActive) return "Server already stopped"
+
+    log("stopping server...")
+
+    port.disconnect()
+
+    updateServerState(false)
+  }
+
+  function updateServerState (newState) {
+    serverActive = newState
+
+    bridge.send("server-status", serverActive)
+
+    if (serverActive) {
+      chrome.action.setIcon({ path: "icons/icon-128x128.png" })
+    } else {
+      chrome.action.setIcon({ path: "icons/icon-bw-128x128.png" })
+    }
+
+    log("server is now", serverActive ? "running" : "stopped")
+  }
+
+  // ========== BEX Bridge ==========
+  // This bridge allows communications between different parts of the BEX:
+  // This background script runs in the background as soon as a part of the
+  // extension is active, and it connects the UI in src/ and any content scripts
+  // running in tabs. Content Scripts are used to forward communication to
+  // dom.js instances, which by design can only talk to their respective
+  // content script.
+
+  updateServerState(serverActive)
+
+  bridge.on("ui-called-action", evt => {
+    log("forwarding UI action")
+    bridge.send("forwarded-ui-action")
     evt.respond()
   })
 
-  bridge.on('log', ({ data, respond }) => {
-    console.log(`[BEX] ${data.message}`, ...(data.data || []))
-    respond()
+  bridge.on("query-server-status", evt => {
+    evt.respond(serverActive)
   })
 
-  bridge.on('getTime', ({ respond }) => {
-    respond(Date.now())
+  bridge.on("toggle-server", evt => {
+    if (!serverActive) startServer()
+    else stopServer()
+    evt.respond()
   })
 
-  bridge.on('storage.get', ({ data, respond }) => {
+  // Keep track of connected content scripts. Start/stop the server above
+  // when the first tab connects/the last one disconnects.
+  bridge.on("query-connected-tabs", evt => {
+    evt.respond(connectedTabs)
+  })
+  bridge.on("tab-connected", evt => {
+    connectedTabs++
+    if (connectedTabs === 1) {
+      startServer()
+    }
+    evt.respond(connectedTabs)
+  })
+  bridge.on("tab-disconnected", evt => {
+    connectedTabs--
+    if (connectedTabs === 0) {
+      stopServer()
+    }
+    evt.respond()
+  })
+
+  // Storage related event handling, not relevant for now
+/*   bridge.on("storage.get", ({ data, respond }) => {
     const { key } = data
     if (key === null) {
       chrome.storage.local.get(null, items => {
@@ -53,7 +129,7 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   // Usage:
   // const { data } = await bridge.send('storage.get', { key: 'someKey' })
 
-  bridge.on('storage.set', ({ data, respond }) => {
+  bridge.on("storage.set", ({ data, respond }) => {
     chrome.storage.local.set({ [data.key]: data.value }, () => {
       respond()
     })
@@ -61,31 +137,9 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   // Usage:
   // await bridge.send('storage.set', { key: 'someKey', value: 'someValue' })
 
-  bridge.on('storage.remove', ({ data, respond }) => {
+  bridge.on("storage.remove", ({ data, respond }) => {
     chrome.storage.local.remove(data.key, () => {
       respond()
     })
-  })
-  // Usage:
-  // await bridge.send('storage.remove', { key: 'someKey' })
-
-  /*
-  // EXAMPLES
-  // Listen to a message from the client
-  bridge.on('test', d => {
-    console.log(d)
-  })
-
-  // Send a message to the client based on something happening.
-  chrome.tabs.onCreated.addListener(tab => {
-    bridge.send('browserTabCreated', { tab })
-  })
-
-  // Send a message to the client based on something happening.
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.url) {
-      bridge.send('browserTabUpdated', { tab, changeInfo })
-    }
-  })
-   */
+  }) */
 })

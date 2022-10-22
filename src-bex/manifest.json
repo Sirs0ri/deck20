@@ -6,7 +6,8 @@
     "128": "icons/icon-128x128.png"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "nativeMessaging"
   ],
   "host_permissions": [
     "*://app.roll20.net/editor/",
@@ -15,7 +16,10 @@
     "*://app.roll20.net/editor#*",
     "*://cdn.roll20.net/*"
   ],
-  "action": {},
+  "action": {
+    "default_popup": "www/index.html#/"
+  },
+  "options_page": "www/index.html#/",
   "background": {
     "service_worker": "background.js"
   },

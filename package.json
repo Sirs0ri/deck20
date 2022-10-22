@@ -1,13 +1,14 @@
 {
   "name": "roll20-deck",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Connect Roll20 to a Stream-Deck",
   "productName": "Roll20-Deck",
   "author": "Maximilian Ertl <ertl.maxi@gmail.com>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "quasar d -m bex"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
