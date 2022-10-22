@@ -58,9 +58,21 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     bridge.send("server-status", serverActive)
 
     if (serverActive) {
-      chrome.action.setIcon({ path: "icons/icon-128x128.png" })
+      chrome.action.setIcon({
+        path: {
+          16: "www/icons/icon-16x16.png",
+          24: "www/icons/icon-24x24.png",
+          32: "www/icons/icon-32x32.png",
+        },
+      })
     } else {
-      chrome.action.setIcon({ path: "icons/icon-bw-128x128.png" })
+      chrome.action.setIcon({
+        path: {
+          16: "www/icons/icon-16x16-bw.png",
+          24: "www/icons/icon-24x24-bw.png",
+          32: "www/icons/icon-32x32-bw.png",
+        },
+      })
     }
 
     log("server is now", serverActive ? "running" : "stopped")

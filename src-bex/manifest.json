@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "icons": {
-    "16": "icons/icon-16x16.png",
-    "48": "icons/icon-48x48.png",
-    "128": "icons/icon-128x128.png"
+    "16": "www/icons/icon-16x16.png",
+    "32": "www/icons/icon-32x32.png",
+    "48": "www/icons/icon-48x48.png",
+    "128": "www/icons/icon-128x128.png"
   },
   "permissions": [
     "storage",
@@ -17,7 +18,12 @@
     "*://cdn.roll20.net/*"
   ],
   "action": {
-    "default_popup": "www/index.html#/"
+    "default_popup": "www/index.html#/",
+    "default_icon": {
+      "16": "www/icons/icon-16x16-bw.png",
+      "24": "www/icons/icon-24x24-bw.png",
+      "32": "www/icons/icon-32x32-bw.png"
+    }
   },
   "options_page": "www/index.html#/",
   "background": {
