@@ -1,11 +1,18 @@
 <template>
-  <q-page class="flex flex-center column" style="min-width: 250px; min-height: 300px">
-    <q-btn label="BEX" @click="sendBexMessage('ui-called-action')" />
-    <q-btn label="Toggle Server" @click="sendBexMessage('toggle-server')" />
+  <q-page class="flex flex-center column q-gutter-y-md q-pa-md" style="min-width: 250px; min-height: 300px">
+    <q-btn
+      outline
+      label="roll20 Hello World"
+      class="full-width"
+      @click="roll20HelloWorld"
+    />
+    <q-btn
+      outline
+      :label="`Turn Server ${serverActive ? 'off' : 'on'}`"
+      class="full-width"
+      @click="toggleServer"
+    />
 
-    <span>
-      Server Active: {{ serverActive }}
-    </span>
     <span>
       Connected Tabs: {{ connectedTabs }}
     </span>
@@ -37,8 +44,14 @@ export default defineComponent({
     // There is no locally running content script, since it's not an allowlisted origin
     // There is no access to other content scripts.
     // There is no access to dom scripts
-    function sendBexMessage (msg) {
-      $q.bex.send(msg)
+    function toggleServer () {
+      $q.bex.send("toggle-server")
+    }
+    function roll20HelloWorld () {
+      $q.bex.send("ui-called-action", {
+        command: "do-message",
+        data: "/w Max Hello World",
+      })
     }
 
     // Set up BEX Bridge comms
@@ -63,7 +76,8 @@ export default defineComponent({
     })
 
     return {
-      sendBexMessage,
+      toggleServer,
+      roll20HelloWorld,
       serverActive,
       connectedTabs,
     }

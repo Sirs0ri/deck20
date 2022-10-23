@@ -28,9 +28,9 @@ export default bexContent((bridge) => {
   //   bridge.send("do-dom-manipulation")
   //   evt.respond()
   // })
-  bridge.on("native-comm", evt => {
+  bridge.on("native-comm", ({ data, respond }) => {
     log("got forwarded-ui-action, pinging dom")
-    bridge.send("forwarded-comm", evt.data)
-    evt.respond()
+    bridge.send("forwarded-comm", data)
+    respond()
   })
 })

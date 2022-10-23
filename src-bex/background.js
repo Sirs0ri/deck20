@@ -15,6 +15,12 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
   log("active", Date.now(), { serverActive })
 
+  // TODO: Use different handler for this?
+  // TODO: REspond with error if no roll20 tab is connected?
+  function sendMessageToRoll20Dom (msg) {
+    bridge.send("native-comm", msg)
+  }
+
   // ========== Native Communication ==========
   // This uses the "nativeCommunication" feature to start/stop the server
   // located in src-native-bridge (which is a very basic node.js server).
@@ -30,12 +36,12 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     port = chrome.runtime.connectNative("de.sirs0ri.roll20deck")
 
     // Forward messages received from the server to the bridge
-    port.onMessage.addListener(function (msg) {
-      log("Received", msg)
-      bridge.send("native-comm", msg)
+    port.onMessage.addListener((data) => {
+      log("Received", data)
+      sendMessageToRoll20Dom({ ...data, _origin: "native" })
     })
 
-    port.onDisconnect.addListener(function () {
+    port.onDisconnect.addListener(() => {
       log("Disconnected")
     })
 
@@ -88,10 +94,10 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
   updateServerState(serverActive)
 
-  bridge.on("ui-called-action", evt => {
-    log("forwarding UI action")
-    bridge.send("forwarded-ui-action")
-    evt.respond()
+  bridge.on("ui-called-action", ({ data, respond }) => {
+    log("forwarding UI action", data)
+    sendMessageToRoll20Dom({ ...data, _origin: "bex" })
+    respond()
   })
 
   bridge.on("query-server-status", evt => {
