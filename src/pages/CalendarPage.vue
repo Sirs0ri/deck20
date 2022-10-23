@@ -1,5 +1,5 @@
 <template>
-  <q-page class="flex flex-center column" style="min-width: 250px; min-height: 300px">
+  <q-page class="flex flex-center column q-gutter-y-md q-pa-md" style="min-width: 250px; min-height: 300px">
     <span>Calendar</span>
   </q-page>
 </template>
