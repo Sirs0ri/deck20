@@ -1,6 +1,6 @@
 {
   "name": "roll20-deck",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Connect Roll20 to a Stream-Deck",
   "productName": "Roll20-Deck",
   "author": "Maximilian Ertl <ertl.maxi@gmail.com>",
