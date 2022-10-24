@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="lHh Lpr lFf" style="min-width: 360px; min-height: 520px">
     <q-header v-if="$q.screen.gt.xs" elevated>
       <q-toolbar>
         <q-btn
@@ -50,7 +50,11 @@
       elevated
       class="bg-grey-8 text-white"
     >
-      <q-tabs indicator-color="red" class="text-white">
+      <q-tabs
+        indicator-color="red"
+        class="text-white"
+        no-caps
+      >
         <q-route-tab
           v-for="link in essentialLinks"
           :key="link.title"
@@ -81,6 +85,7 @@ export default defineComponent({
     // eslint-disable-next-line no-unused-vars
     const $q = useQuasar()
 
+    // TODO: This fails if it's not a BEX
     window.bex_type = window.chrome.tabs.getCurrent().then(tab => {
       if (tab === undefined) return "bex-popup"
       else return "bex-options"
@@ -107,14 +112,14 @@ export default defineComponent({
     const linksList = computed(() => {
       return [
         {
-          title: "Home",
+          title: "Übersicht",
           caption: "quasar.dev",
           icon: "sym_r_home",
           link: "/",
           class: "",
         },
         {
-          title: "Calendar",
+          title: "Kalender",
           caption: "quasar.dev",
           icon: "sym_r_event",
           link: "/calendar",
