@@ -18,7 +18,7 @@
     "*://cdn.roll20.net/*"
   ],
   "action": {
-    "default_popup": "www/index.html#/",
+    "default_popup": "www/index.html#/calendar",
     "default_icon": {
       "16": "www/icons/icon-16x16-bw.png",
       "24": "www/icons/icon-24x24-bw.png",
