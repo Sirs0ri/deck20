@@ -130,34 +130,48 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     evt.respond()
   })
 
-  // Storage related event handling, not relevant for now
-/*   bridge.on("storage.get", ({ data, respond }) => {
-    const { key } = data
-    if (key === null) {
-      chrome.storage.local.get(null, items => {
-        // Group the values up into an array to take advantage of the bridge's chunk splitting.
-        respond(Object.values(items))
-      })
-    } else {
-      chrome.storage.local.get([key], items => {
-        respond(items[key])
-      })
-    }
+  // ========== STATE PERSISTENCE ==========
+  bridge.on("restore-store", ({ data, respond }) => {
+    // TODO: Get state from somewhere
+    chrome.storage.local.get([data], items => {
+      respond(items[data])
+    })
   })
-  // Usage:
-  // const { data } = await bridge.send('storage.get', { key: 'someKey' })
 
-  bridge.on("storage.set", ({ data, respond }) => {
+  bridge.on("persist-store", ({ data, respond }) => {
+    // TODO: Get state from somewhere
     chrome.storage.local.set({ [data.key]: data.value }, () => {
-      respond()
+      respond(true)
     })
   })
-  // Usage:
-  // await bridge.send('storage.set', { key: 'someKey', value: 'someValue' })
 
-  bridge.on("storage.remove", ({ data, respond }) => {
-    chrome.storage.local.remove(data.key, () => {
-      respond()
-    })
-  }) */
+  // bridge.on("storage.get", ({ data, respond }) => {
+  //   const { key } = data
+  //   if (key === null) {
+  //     chrome.storage.local.get(null, items => {
+  //       // Group the values up into an array to take advantage of the bridge's chunk splitting.
+  //       respond(Object.values(items))
+  //     })
+  //   } else {
+  //     chrome.storage.local.get([key], items => {
+  //       respond(items[key])
+  //     })
+  //   }
+  // })
+  // // Usage:
+  // // const { data } = await bridge.send('storage.get', { key: 'someKey' })
+
+  // bridge.on("storage.set", ({ data, respond }) => {
+  //   chrome.storage.local.set({ [data.key]: data.value }, () => {
+  //     respond()
+  //   })
+  // })
+  // // Usage:
+  // // await bridge.send('storage.set', { key: 'someKey', value: 'someValue' })
+
+  // bridge.on("storage.remove", ({ data, respond }) => {
+  //   chrome.storage.local.remove(data.key, () => {
+  //     respond()
+  //   })
+  // })
 })
