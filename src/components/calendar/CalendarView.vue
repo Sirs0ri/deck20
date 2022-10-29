@@ -1,86 +1,48 @@
 <template>
   <div class="calendar">
-    <transition-group
-      appear
-      enter-active-class="animated fadeIn"
-      duration="1000"
-    >
-      <div
-        v-if="stateReady"
-        key="header"
-        class="header"
-      >
-        {{ getMonth(currentView).name }} {{ currentView.year }}
-      </div>
-      <q-btn
-        key="btn_back"
-        padding="none"
-        icon="sym_r_navigate_before"
-        class="fit"
-        flat
-        @click="showPreviousMonth"
-      />
-      <q-btn
-        key="btn_forward"
-        padding="none"
-        icon="sym_r_navigate_next"
-        class="fit"
-        flat
-        @click="showNextMonth"
-      />
+    <div v-if="stateReady" class="header">
+      {{ getMonth(currentView).name }} {{ currentView.year }}
+    </div>
+    <q-btn
+      key="btn_back"
+      padding="none"
+      icon="sym_r_navigate_before"
+      class="fit"
+      flat
+      style="grid-area: btp"
+      @click="showPreviousMonth"
+    />
+    <q-btn
+      key="btn_forward"
+      padding="none"
+      icon="sym_r_navigate_next"
+      class="fit"
+      flat
+      style="grid-area: btn"
+      @click="showNextMonth"
+    />
 
-      <!-- one div to store all 42 days, inserting them into the grid via display: contents -->
-      <div
-        v-if="stateReady"
-        key="days"
-        style="display: contents"
-      >
-        <!-- Offsets because not every month starts on a "monday" -->
-        <DayCell
-          v-for="i in getWeekday({...currentView, day: 1}).index - 1"
-          :key="`day_prev${i}`"
-          :day="getPreviousMonthDay(i)"
-          :today="isToday(getPreviousMonthDay(i))"
-          previous-month
-          @click="showPreviousMonth"
-        />
+    <DayCell
+      v-for="(day, i) in currentViewDays"
+      :key="`day_${i}`"
+      v-bind="day"
+      @click="evt => handleDayClick(day, evt)"
+    />
 
-        <!-- Days of this month -->
-        <DayCell
-          v-for="i in getMonth(currentView).days"
-          :key="`day_${i}`"
-          :day="{...currentView, day: i}"
-          :today="isToday({...currentView, day: i})"
-          @click.ctrl="handleDayClick({...currentView, day: i})"
-        />
-
-        <!-- Offsets because not every month ends on a "sunday" -->
-        <DayCell
-          v-for="i in (6*7) - (getWeekday({...currentView, day: 1}).index - 1) - getMonth(currentView).days"
-          :key="`day_next_${i}`"
-          :day="getNextMonthDay(i)"
-          :today="isToday(getNextMonthDay(i))"
-          next-month
-          @click="showNextMonth"
-        />
-      </div>
-
-      <q-btn
-        v-if="stateReady"
-        key="footer"
-        class="footer fit text-weight-regular"
-        padding="none"
-        :label="getFormattedDate(store.today, 'short')"
-        no-caps
-        flat
-        @click="showToday"
-      />
-    </transition-group>
+    <q-btn
+      v-if="stateReady"
+      class="footer fit text-weight-regular"
+      padding="none"
+      :label="getFormattedDate(store.today, 'short')"
+      no-caps
+      flat
+      @click="showToday"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useCalendarStore } from "src/stores/calendar-store"
 
 import DayCell from "./CalendarDayItem.vue"
@@ -93,26 +55,86 @@ import {
   months,
   dateEquals,
   getFormattedDate,
+  days,
 } from "./calendar"
 
 const store = useCalendarStore()
 
 // ========== UI TOOLS ==========
-const currentView = ref({ ...store.today, day: 1 })
 const stateReady = ref(false)
+const currentView = ref({ ...store.today, day: 1 })
+
+const currentViewDays = computed(() => {
+  if (!stateReady.value) return []
+
+  const firstOfThisMonth = { ...currentView.value, day: 1 }
+  const lastOfThisMonth = { ...currentView.value, day: getMonth(currentView.value).days }
+
+  // Offsets because not every month starts on a "monday"
+  const daysBeforeCount = getWeekday(firstOfThisMonth).index - 1
+  // Days of this month
+  const daysCount = getMonth(currentView.value).days
+  // Days to fill the remaining cells of the 6x7 grid
+  const daysAfterCount = (6 * 7) - daysBeforeCount - daysCount
+
+  const days = []
+
+  for (let i = daysBeforeCount; i > 0; i--) {
+    const day = substractDays(firstOfThisMonth, i)
+    days.push({
+      day,
+      previousMonth: true,
+      nextMonth: false,
+      today: isToday(day),
+    },
+    )
+  }
+  for (let i = 1; i <= daysCount; i++) {
+    const day = { ...currentView.value, day: i }
+    days.push({
+      day,
+      previousMonth: false,
+      nextMonth: false,
+      today: isToday(day),
+      class: getCorners(i),
+    },
+    )
+  }
+  for (let i = 1; i <= daysAfterCount; i++) {
+    const day = addDays(lastOfThisMonth, i)
+    days.push({
+      day,
+      previousMonth: false,
+      nextMonth: true,
+      today: isToday(day),
+    },
+    )
+  }
+
+  return days
+})
 
 function isToday ({ day, month, year }) {
   return dateEquals(store.today, { day, month, year })
 }
 
-function getPreviousMonthDay (i) {
-  return substractDays({ ...currentView.value, day: 1 }, (getWeekday({ ...currentView.value, day: 1 }).index - i))
+function getCorners (dayIndex) {
+  const day = getWeekday({ ...currentView.value, day: dayIndex })
+  const _month = getMonth({ ...currentView.value, day: dayIndex })
+  return Object.entries({
+    "corner--1": dayIndex === _month.days && day.index !== days.length && _month.days >= days.length,
+    "corner--3": dayIndex === 1 && day.index !== 1 && _month.days >= days.length,
+    "border-1": dayIndex <= days.length,
+    "border-2": day.index === days.length || dayIndex === _month.days,
+    "border-3": dayIndex > _month.days - days.length,
+    "border-4": day.index === 1 || dayIndex === 1,
+  })
+    .filter(([cornerId, active]) => active)
+    .map(([cornerId, active]) => cornerId)
+    .join(" ")
 }
 
-function getNextMonthDay (i) {
-  return addDays({ ...currentView.value, day: getMonth(currentView.value).days }, i)
-}
-
+// ========== NAVIGATION ==========
 function showNextMonth () {
   if (currentView.value.month === months.length) {
     currentView.value.month = 1
@@ -129,20 +151,29 @@ function showPreviousMonth () {
     currentView.value.month--
   }
 }
-
 function showToday () {
   currentView.value = { ...store.today, day: 1 }
 }
 
 let doubleClick = false
-function handleDayClick (day) {
-  if (doubleClick) {
-    store.today = day
-  } else {
-    doubleClick = true
-    setTimeout(() => {
-      doubleClick = false
-    }, 200)
+function handleDayClick (day, clickEvt) {
+  // if CTRL is held, a doubleclick changes "today"
+  if (clickEvt.ctrlKey) {
+    if (doubleClick) {
+      store.today = day.day
+    } else {
+      doubleClick = true
+      setTimeout(() => {
+        doubleClick = false
+      }, 200)
+    }
+
+    return
+  }
+
+  // On a normal click, navigate to the clicked month
+  if (day.previousMonth || day.nextMonth) {
+    currentView.value = { ...day.day, day: 1 }
   }
 }
 
@@ -156,8 +187,18 @@ store.restored.then(success => {
 <style lang="scss" scoped>
 .calendar {
   --columns: 7;
-  --gap: 1px;
+  --gap: 2px;
+  --gap-negative: calc(-1 * var(--gap));
   --cell-size: 45px;
+  --cell-border-radius: 0.5em;
+  --month-border-color: rgb(95, 95, 95);
+  --month-border: var(--gap) solid var(--month-border-color);
+  --month-border-radius: calc(var(--cell-border-radius) + var(--gap));
+
+  $month-color: rgba($primary, 0.1);
+
+  --month-color: $month-color;
+  --month-color: red;
 
   display: grid;
   gap: var(--gap);
@@ -165,7 +206,7 @@ store.restored.then(success => {
   grid-auto-rows: var(--cell-size);
 
   grid-template-areas:
-    "hdr hdr hdr hdr hdr btn btn"
+    "hdr hdr hdr hdr hdr btp btn"
     "day day day day day day day"
     "day day day day day day day"
     "day day day day day day day"
@@ -173,6 +214,15 @@ store.restored.then(success => {
     "day day day day day day day"
     "day day day day day day day"
     "ftr ftr ftr ftr ftr ftr ftr";
+
+  position: relative;
+
+  filter:
+    sepia(1)
+    hue-rotate(165deg)
+    saturate(1.3)
+    /* drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.3)) */
+    ;
 
   .header {
     grid-area: hdr;
@@ -186,44 +236,86 @@ store.restored.then(success => {
     padding: 0.5em;
   }
 
-  $border-color-default: black;
-  $border-color-today: $primary;
-
   .date-cell {
     width: var(--cell-size);
     aspect-ratio: 1;
-    border: 1px solid;
-    border-color: rgba($border-color-default, 0.25);
-    border-radius: 0.5em;
     padding: 0.5em;
     display: flex;
     justify-content: center;
     align-items: center;
 
-    transition: border-width 100ms, border-color 100ms, opacity 100ms;
+    position: relative;
 
-    &:hover {
-      border-color: rgba($border-color-default, 0.5);
-      border-width: 3px;
+    &:not(:is(.previous-month, .next-month)):before{
+      content: "";
+      position: absolute;
+      inset: calc(-0.5 * var(--gap));
+      z-index: -2;
+      background: $month-color;
+
+      background: white;
+    }
+    &.border-1:before {
+      border-top: var(--month-border);
+      top: calc(-1 * var(--gap));
+    }
+    &.border-2:before {
+      border-right: var(--month-border);
+      right: calc(-1 * var(--gap));
+    }
+    &.border-3:before {
+      border-bottom: var(--month-border);
+      bottom: calc(-1 * var(--gap));
+    }
+    &.border-4:before {
+      border-left: var(--month-border);
+      left: calc(-1 * var(--gap));
+    }
+    &.border-1.border-4:before {
+      border-top-left-radius: var(--month-border-radius);
+    }
+    &.border-1.border-2:before {
+      border-top-right-radius: var(--month-border-radius);
+    }
+    &.border-2.border-3:before {
+      border-bottom-right-radius: var(--month-border-radius);
+    }
+    &.border-3.border-4:before {
+      border-bottom-left-radius: var(--month-border-radius);
     }
 
-    &.today {
-      border-color: $border-color-today;
-      background-color: rgba($border-color-today, 0.5);
+    &.corner--1::after,
+    &.corner--3::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      border: none;
+      width: calc(2 * var(--month-border-radius));
+      height: calc(2 * calc(var(--cell-border-radius) + var(--gap)));
+      outline: var(--gap) solid var(--month-border-color);
+      box-shadow: 0 0 0 2em white;
+
+    }
+    &.corner--1::after {
+      top: 0;
+      right: calc(-1 * var(--gap));
+      border-right: none;
+      border-bottom: none;
+      transform: translateX(100%);
+      border-radius: 50% 0 0 0;
+      clip-path: inset(-3px 1px 1px -3px);
     }
 
-    &.previous-month,
-    &.next-month {
-      opacity: 0.5;
-      border-color: rgba($border-color-default, 0.25);
-
-      &:hover {
-        opacity: 0.75;
-      }
-
-      &.today{
-        border-color: rgba($border-color-today, 0.35);
-      }
+    &.corner--3::after {
+      border-left: none;
+      border-top: none;
+      /* bottom: calc(-1 * var(--gap));
+      left: 0; */
+      bottom: 0;
+      left: calc(-1 * var(--gap));
+      transform: translateX(-100%);
+      border-radius: 0 0 50% 0;
+      clip-path: inset(1px -3px -3px 1px);
     }
 
   }
