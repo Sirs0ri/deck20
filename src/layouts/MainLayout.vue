@@ -85,29 +85,39 @@ export default defineComponent({
     // eslint-disable-next-line no-unused-vars
     const $q = useQuasar()
 
-    // TODO: This fails if it's not a BEX
-    window.bex_type = window.chrome.tabs.getCurrent().then(tab => {
-      if (tab === undefined) return "bex-popup"
-      else return "bex-options"
-    })
-    window.bex_type.then(type => { document.body.classList.add(type) })
-
     const leftDrawerOpen = ref(false)
 
-    const serverActive = ref(false)
-    $q.bex.send("query-server-status").then(({ data, respond }) => {
-      serverActive.value = data
-      respond()
-    })
-    const serverStatusCallback = ({ data, respond }) => {
-      serverActive.value = data
-      respond()
-    }
-    $q.bex.on("server-status", serverStatusCallback)
+    const isBex = process.env.MODE === "bex"
 
-    onBeforeUnmount(() => {
-      $q.bex.off("server-status", serverStatusCallback)
-    })
+    // Set body class depending on what this is - bex, pwa, spa, etc.
+    if (isBex) {
+      // TODO: This fails if it's not a BEX
+      window.bex_type = window.chrome.tabs.getCurrent().then(tab => {
+        if (tab === undefined) return "bex-popup"
+        else return "bex-options"
+      })
+      window.bex_type.then(type => { document.body.classList.add(type) })
+    } else {
+      document.body.classList.add(process.env.MODE)
+    }
+
+    // Handle server state
+    const serverActive = ref(false)
+    if (isBex) {
+      $q.bex.send("query-server-status").then(({ data, respond }) => {
+        serverActive.value = data
+        respond()
+      })
+      const serverStatusCallback = ({ data, respond }) => {
+        serverActive.value = data
+        respond()
+      }
+      $q.bex.on("server-status", serverStatusCallback)
+
+      onBeforeUnmount(() => {
+        $q.bex.off("server-status", serverStatusCallback)
+      })
+    }
 
     const linksList = computed(() => {
       return [
