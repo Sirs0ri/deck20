@@ -16,6 +16,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     persist()
   })
 
+  // Todo: handle store init without anything to restore
   async function restore () {
     if ($q.bex != null) {
       // Restore state via BEX bridge
@@ -24,7 +25,8 @@ export const useCalendarStore = defineStore("calendar", () => {
       return true
     } else {
       // TODO: this is not a BEX, store will have to be restored some other way
-      return new Promise(resolve => { resolve(false) })
+      today.value = { day: 1, month: 5, year: 1019 }
+      return true
     }
   }
 
