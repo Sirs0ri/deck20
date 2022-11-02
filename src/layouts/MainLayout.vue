@@ -138,7 +138,7 @@ export default defineComponent({
         {
           title: "Server",
           caption: "quasar.dev",
-          icon: "sym_r_network_ping",
+          icon: "sym_r_terminal",
           link: "/server",
           class: "",
           alert: serverActive.value ? "green" : undefined,
