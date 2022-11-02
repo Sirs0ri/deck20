@@ -9,7 +9,7 @@
           icon-right="sym_r_send"
           label="Teilen"
           no-caps
-          outline
+          flat
           @click="sendToRoll20"
         />
         <q-btn
@@ -17,7 +17,7 @@
           icon-right="sym_r_event_upcoming"
           label="weiter"
           no-caps
-          outline
+          flat
           @click="store.increment"
         />
       </div>

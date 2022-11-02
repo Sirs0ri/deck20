@@ -36,41 +36,56 @@
         </q-carousel-slide>
       </q-carousel>
     </div>
-    <q-btn
-      key="btn_back"
-      padding="none"
-      icon="sym_r_navigate_before"
-      class="fit"
-      flat
-      style="grid-area: btp"
+
+    <div
+      class="grid-button"
+      style="grid-area: hdr / day 6"
       @click="showPreviousMonth"
-    />
-    <q-btn
-      key="btn_forward"
-      padding="none"
-      icon="sym_r_navigate_next"
-      class="fit"
-      flat
-      style="grid-area: btn"
+    >
+      <q-icon
+        size="sm"
+        color="primary"
+        name="sym_r_navigate_before"
+      />
+    </div>
+
+    <div
+      class="grid-button"
+      style="grid-area: hdr / day 7"
       @click="showNextMonth"
-    />
+    >
+      <q-icon
+        size="sm"
+        color="primary"
+        name="sym_r_navigate_next"
+      />
+    </div>
 
-    <DayCell
-      v-for="(day, i) in currentViewDays"
-      :key="`day_${i}`"
-      v-bind="day"
-      @click="evt => handleDayClick(day, evt)"
-    />
+    <div style="display: contents;">
+      <DayBackground
+        v-for="(day, i) in currentViewDays"
+        :key="`day_${i}`"
+        v-bind="day.bind"
+        :style="{gridArea: day.gridArea}"
+      />
+    </div>
+    <div style="display: contents;">
+      <DayCell
+        v-for="(day, i) in currentViewDays"
+        :key="`day_${i}`"
+        v-bind="day.bind"
+        :style="{gridArea: day.gridArea}"
+        @click="evt => handleDayClick(day, evt)"
+      />
+    </div>
 
-    <q-btn
+    <div
       v-if="stateReady"
-      class="footer fit text-weight-regular"
-      padding="none"
-      :label="getFormattedDate(store.today, 'short')"
-      no-caps
-      flat
+      class="footer grid-button"
       @click="showToday"
-    />
+    >
+      {{ getFormattedDate(store.today, 'short') }}
+    </div>
   </div>
 </template>
 
@@ -78,6 +93,7 @@
 import { ref, computed } from "vue"
 import { useCalendarStore } from "src/stores/calendar-store"
 
+import DayBackground from "./CalendarDayBackground.vue"
 import DayCell from "./CalendarDayItem.vue"
 
 import {
@@ -88,7 +104,6 @@ import {
   months,
   dateEquals,
   getFormattedDate,
-  days,
 } from "./calendar"
 
 const store = useCalendarStore()
@@ -122,38 +137,46 @@ const currentViewDays = computed(() => {
   const days = []
 
   for (let i = daysBeforeCount; i > 0; i--) {
-    const day = substractDays(firstOfThisMonth, i)
+    const date = substractDays(firstOfThisMonth, i)
     days.push({
-      day,
-      previousMonth: true,
-      nextMonth: false,
-      today: isToday(day),
+      bind: {
+        date,
+        previousMonth: true,
+        nextMonth: false,
+        today: isToday(date),
+      },
     },
     )
   }
   for (let i = 1; i <= daysCount; i++) {
-    const day = { ...currentView.value, day: i }
+    const date = { ...currentView.value, day: i }
     days.push({
-      day,
-      previousMonth: false,
-      nextMonth: false,
-      today: isToday(day),
-      class: getCorners(i),
+      bind: {
+        date,
+        previousMonth: false,
+        nextMonth: false,
+        today: isToday(date),
+      },
     },
     )
   }
   for (let i = 1; i <= daysAfterCount; i++) {
-    const day = addDays(lastOfThisMonth, i)
+    const date = addDays(lastOfThisMonth, i)
     days.push({
-      day,
-      previousMonth: false,
-      nextMonth: true,
-      today: isToday(day),
+      bind: {
+        date,
+        previousMonth: false,
+        nextMonth: true,
+        today: isToday(date),
+      },
     },
     )
   }
 
-  return days
+  return days.map((day, i) => ({
+    ...day,
+    gridArea: `week ${Math.floor(i / 7) + 1} / day ${(i % 7) + 1}`,
+  }))
 })
 
 function isToday ({ day, month, year }) {
@@ -211,7 +234,7 @@ function handleDayClick (day, clickEvt) {
   // if CTRL is held, a doubleclick changes "today"
   if (clickEvt.ctrlKey) {
     if (doubleClick) {
-      store.today = day.day
+      store.today = day.bind.date
     } else {
       doubleClick = true
       setTimeout(() => {
@@ -223,8 +246,8 @@ function handleDayClick (day, clickEvt) {
   }
 
   // On a normal click, navigate to the clicked month
-  if (day.previousMonth || day.nextMonth) {
-    currentView.value = { ...day.day, day: 1 }
+  if (day.bind.previousMonth || day.bind.nextMonth) {
+    currentView.value = { ...day.bind.date, day: 1 }
   }
 }
 
@@ -238,45 +261,52 @@ store.restored.then(success => {
 <style lang="scss" scoped>
 .calendar {
   --columns: 7;
+  --rows: 6;
   --gap: 2px;
-  --gap-negative: calc(-1 * var(--gap));
   --cell-size: 45px;
   --cell-border-radius: 0.5em;
-  --month-border-color: rgb(95, 95, 95);
-  --month-border: var(--gap) solid var(--month-border-color);
-  --month-border-radius: calc(var(--cell-border-radius) + var(--gap));
 
-  $month-color: rgba($primary, 0.1);
-
-  --month-color: $month-color;
-  --month-color: red;
+  --border-color: rgba(25, 118, 210, 0.3);
+  --bg-color: rgba(25, 118, 210, 0.1);
 
   display: grid;
   gap: var(--gap);
-  grid-template-columns: repeat(var(--columns), var(--cell-size));
+  grid-template-columns:
+    [hdr-start days-start ftr-start]
+    repeat(calc(var(--columns)), [day] var(--cell-size))
+    [hdr-end days-end ftr-end];
+  grid-template-rows:
+    [hdr-start]
+    var(--cell-size)
+    [hdr-end days-start]
+    repeat(var(--rows), [week] var(--cell-size))
+    [ days-end  ftr-start]
+    var(--cell-size)
+    [ftr-end];
   grid-auto-rows: var(--cell-size);
-
-  grid-template-areas:
-    "hdr hdr hdr hdr hdr btp btn"
-    "day day day day day day day"
-    "day day day day day day day"
-    "day day day day day day day"
-    "day day day day day day day"
-    "day day day day day day day"
-    "day day day day day day day"
-    "ftr ftr ftr ftr ftr ftr ftr";
 
   position: relative;
 
-  filter:
-    sepia(1)
-    hue-rotate(165deg)
-    saturate(1.3)
-    /* drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.3)) */
-    ;
+  .season-icon{
+    pointer-events: none;
+    position: absolute;
+    top: -1.5em;
+    left: -3.5em;
+
+    opacity: 0.07;
+
+    transform: rotate(-20deg);
+
+  }
+  .season-icon + .season-icon {
+    color: $primary;
+    z-index: 5;
+    opacity: 0.05;
+  }
 
   .header {
-    grid-area: hdr;
+    grid-row: hdr;
+    grid-column: hdr / span 5;
     padding: 0.5em;
     display: flex;
     justify-content: center;
@@ -287,88 +317,29 @@ store.restored.then(success => {
     padding: 0.5em;
   }
 
-  .date-cell {
-    width: var(--cell-size);
-    aspect-ratio: 1;
-    padding: 0.5em;
+  .grid-button {
     display: flex;
     justify-content: center;
     align-items: center;
 
-    position: relative;
+    padding: 0.5em;
 
-    &:not(:is(.previous-month, .next-month)):before{
-      content: "";
-      position: absolute;
-      inset: calc(-0.5 * var(--gap));
-      z-index: -2;
-      background: $month-color;
+    border-width: 2px;
+    border-style: solid;
+    border-color: white;
+    border-radius: 0.5em;
 
-      background: white;
-    }
-    &.border-1:before {
-      border-top: var(--month-border);
-      top: calc(-1 * var(--gap));
-    }
-    &.border-2:before {
-      border-right: var(--month-border);
-      right: calc(-1 * var(--gap));
-    }
-    &.border-3:before {
-      border-bottom: var(--month-border);
-      bottom: calc(-1 * var(--gap));
-    }
-    &.border-4:before {
-      border-left: var(--month-border);
-      left: calc(-1 * var(--gap));
-    }
-    &.border-1.border-4:before {
-      border-top-left-radius: var(--month-border-radius);
-    }
-    &.border-1.border-2:before {
-      border-top-right-radius: var(--month-border-radius);
-    }
-    &.border-2.border-3:before {
-      border-bottom-right-radius: var(--month-border-radius);
-    }
-    &.border-3.border-4:before {
-      border-bottom-left-radius: var(--month-border-radius);
-    }
+    cursor: pointer;
 
-    &.corner--1::after,
-    &.corner--3::after {
-      content: "";
-      position: absolute;
-      z-index: -1;
-      border: none;
-      width: calc(2 * var(--month-border-radius));
-      height: calc(2 * calc(var(--cell-border-radius) + var(--gap)));
-      outline: var(--gap) solid var(--month-border-color);
-      box-shadow: 0 0 0 2em white;
+    --transition-duration: 200ms;
+    transition:
+      border-color var(--transition-duration),
+      background-color var(--transition-duration),
+      opacity var(--transition-duration);
 
+    &:hover {
+      background-color: rgba($primary, 0.1);
     }
-    &.corner--1::after {
-      top: 0;
-      right: calc(-1 * var(--gap));
-      border-right: none;
-      border-bottom: none;
-      transform: translateX(100%);
-      border-radius: 50% 0 0 0;
-      clip-path: inset(-3px 1px 1px -3px);
-    }
-
-    &.corner--3::after {
-      border-left: none;
-      border-top: none;
-      /* bottom: calc(-1 * var(--gap));
-      left: 0; */
-      bottom: 0;
-      left: calc(-1 * var(--gap));
-      transform: translateX(-100%);
-      border-radius: 0 0 50% 0;
-      clip-path: inset(1px -3px -3px 1px);
-    }
-
   }
 }
 
