@@ -48,9 +48,42 @@ export default bexDom(async (bridge) => {
 
   log("Chat connected")
 
-  /*
-  bridge.send('message.to.quasar', {
-    worked: true
-  })
-  */
+  // /** Send a message directly via to Firebase
+  //  * @param {String} who Displayname of the sender
+  //  * @param {String} content Content of the message
+  //  * @param {String} type [general, whisper, system]
+  //  */
+  // // TODO: Avatar, Inlinerolls
+  // function sendMessage (who, content, type) {
+  //   const msg = {
+  //     who,
+  //     type,
+  //     content,
+  //     playerid: window.currentPlayer.id,
+  //     avatar: "/users/avatar/3307558/30",
+  //     inlinerolls: [],
+  //   }
+  //   const db = window.firebase.database().ref(`${window.campaign_storage_path}/chat`)
+  //   const msgId = db.push().key
+  //   db.child(msgId).setWithPriority(msg, window.firebase.database.ServerValue.TIMESTAMP)
+  // }
+
+  // function processRoll (expression) {
+  //   return new Promise((resolve, reject) => {
+  //     // Roll20's dice engine
+  //     const engine = window.currentPlayer.d20.textchat.diceengine
+  //     // Callbacks
+  //     const onSuccess = (results, rollid, signature) => {
+  //       resolve({ expression, results, rollid, signature })
+  //     }
+  //     const onError = (err) => reject(err)
+  //     // Do the roll - parse and execute the expression
+  //     engine.process(
+  //       expression,
+  //       onSuccess,
+  //       onError,
+  //     )
+  //   })
+  // }
+  // const rolls = await processRoll("2d20")
 })
