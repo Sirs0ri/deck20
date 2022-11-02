@@ -1,7 +1,40 @@
 <template>
   <div class="calendar">
+    <div class="season-icon">
+      <q-icon size="12em" :name="seasonIcon" />
+    </div>
+    <div class="season-icon">
+      <q-icon size="12em" :name="seasonIcon" />
+    </div>
+
     <div v-if="stateReady" class="header">
-      {{ getMonth(currentView).name }} {{ currentView.year }}
+      <q-carousel
+        ref="carousel"
+        v-model="slide"
+        vertical
+        class="bg-transparent fit"
+        animated
+        transition-prev="jump-down"
+        transition-next="jump-up"
+        transition-duration="100"
+        @mouseenter="carouselNext"
+        @mouseleave="carouselPrev"
+      >
+        <q-carousel-slide
+          name="bf"
+          style="padding: 0"
+          class="flex flex-center"
+        >
+          {{ getMonth(currentView).name }} {{ currentView.year }} BF
+        </q-carousel-slide>
+        <q-carousel-slide
+          name="hal"
+          style="padding: 0"
+          class="flex flex-center"
+        >
+          {{ getMonth(currentView).name }} {{ currentView.year - 993 }} Hal
+        </q-carousel-slide>
+      </q-carousel>
     </div>
     <q-btn
       key="btn_back"
@@ -64,6 +97,15 @@ const store = useCalendarStore()
 const stateReady = ref(false)
 const currentView = ref({ ...store.today, day: 1 })
 
+const slide = ref("bf")
+const carousel = ref(null)
+function carouselNext () {
+  carousel.value.next()
+}
+function carouselPrev () {
+  carousel.value.previous()
+}
+
 const currentViewDays = computed(() => {
   if (!stateReady.value) return []
 
@@ -118,21 +160,30 @@ function isToday ({ day, month, year }) {
   return dateEquals(store.today, { day, month, year })
 }
 
-function getCorners (dayIndex) {
-  const day = getWeekday({ ...currentView.value, day: dayIndex })
-  const _month = getMonth({ ...currentView.value, day: dayIndex })
-  return Object.entries({
-    "corner--1": dayIndex === _month.days && day.index !== days.length && _month.days >= days.length,
-    "corner--3": dayIndex === 1 && day.index !== 1 && _month.days >= days.length,
-    "border-1": dayIndex <= days.length,
-    "border-2": day.index === days.length || dayIndex === _month.days,
-    "border-3": dayIndex > _month.days - days.length,
-    "border-4": day.index === 1 || dayIndex === 1,
-  })
-    .filter(([cornerId, active]) => active)
-    .map(([cornerId, active]) => cornerId)
-    .join(" ")
-}
+const seasonIcon = computed(() => {
+  switch (currentView.value.month) {
+    case 3: // sep
+    case 4: // okt
+    case 5: // nov
+      return "sym_r_filter_drama"
+    case 6: // dez
+    case 7: // jan
+    case 8: // feb
+      return "sym_r_ac_unit"
+    case 9: // mär
+    case 10: // apr
+    case 11: // mai
+      return "sym_r_local_florist"
+    case 12: // juni
+    case 13: // Juli
+    case 1: // jul
+    case 2: // aug
+      return "sym_r_sunny"
+
+    default:
+      return "sym_r_sunny"
+  }
+})
 
 // ========== NAVIGATION ==========
 function showNextMonth () {
