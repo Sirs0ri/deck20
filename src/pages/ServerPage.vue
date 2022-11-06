@@ -23,14 +23,16 @@
 
 <script setup>
 import { ref, onBeforeUnmount } from "vue"
-import { useQuasar } from "quasar"
-// import { useRoute } from "vue-router"
+// import { useQuasar } from "quasar"
+
+import { useBridge } from "src/utils/bexBridge"
 
 const log = (...args) => console.log("[bex] ui", ...args)
 
-const $q = useQuasar()
-
-// const $route = useRoute()
+const {
+  bexSend,
+  bexOn,
+} = useBridge()
 
 const serverActive = ref(false)
 const connectedTabs = ref(0)
@@ -40,7 +42,7 @@ const connectedTabs = ref(0)
 // There is no access to other content scripts.
 // There is no access to dom scripts
 function toggleServer () {
-  $q.bex.send("toggle-server")
+  bexSend("toggle-server")
 }
 function roll20HelloWorld () {
   $q.bex.send("ui-called-action", {
@@ -50,13 +52,13 @@ function roll20HelloWorld () {
 }
 
 // Set up BEX Bridge comms
-$q.bex.send("query-server-status").then(({ data, respond }) => {
+bexSend("query-server-status").then(({ data }) => {
+  if (!data) return
   serverActive.value = data
-  respond()
 })
-$q.bex.send("query-connected-tabs").then(({ data, respond }) => {
+bexSend("query-connected-tabs").then(({ data }) => {
+  if (!data) return
   connectedTabs.value = data
-  respond()
 })
 
 const serverStatusCallback = ({ data, respond }) => {
@@ -64,10 +66,11 @@ const serverStatusCallback = ({ data, respond }) => {
   serverActive.value = data
   respond()
 }
-$q.bex.on("server-status", serverStatusCallback)
+
+const bexOffServerStatus = bexOn("server-status", serverStatusCallback)
 
 onBeforeUnmount(() => {
-  $q.bex.off("server-status", serverStatusCallback)
+  bexOffServerStatus()
 })
 
 </script>
