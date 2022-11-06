@@ -2,12 +2,6 @@
   <q-page class="flex flex-center column q-gutter-y-md q-pa-md">
     <q-btn
       outline
-      label="roll20 Hello World"
-      class="full-width"
-      @click="roll20HelloWorld"
-    />
-    <q-btn
-      outline
       :label="`Turn Server ${serverActive ? 'off' : 'on'}`"
       class="full-width"
       @click="toggleServer"
@@ -16,8 +10,6 @@
     <span>
       Connected Tabs: {{ connectedTabs }}
     </span>
-    <!-- <pre>{{ JSON.stringify($q.screen, null, 4) }}</pre> -->
-    <!-- <pre>{{ JSON.stringify($route, null, 4) }}</pre> -->
   </q-page>
 </template>
 
@@ -43,12 +35,6 @@ const connectedTabs = ref(0)
 // There is no access to dom scripts
 function toggleServer () {
   bexSend("toggle-server")
-}
-function roll20HelloWorld () {
-  $q.bex.send("ui-called-action", {
-    command: "do-message",
-    data: "/w Max Hello World",
-  })
 }
 
 // Set up BEX Bridge comms

@@ -126,6 +126,12 @@ const essentialLinks = computed(() => {
     class: "",
   })
   l.push({
+    title: "Würfe",
+    icon: "sym_r_casino",
+    link: "/rolls",
+    class: "",
+  })
+  l.push({
     title: "Kalender",
     icon: "sym_r_event",
     link: "/calendar",
