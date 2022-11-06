@@ -137,6 +137,12 @@ const essentialLinks = computed(() => {
     link: "/calendar",
     class: "icon-md-filled",
   })
+  l.push({
+    title: "Charaktere",
+    icon: "sym_r_emoji_people",
+    link: "/characters",
+    class: "",
+  })
   isBex && l.push({
     title: "Server",
     icon: "sym_r_terminal",
