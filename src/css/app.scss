@@ -17,5 +17,64 @@
     'wght' 400,
     'GRAD' 0,
     'opsz' 48
+}
+
+.q-toggle {
+  .q-toggle__inner {
+
+    // defaults for .q-toggle__inner--falsy
+    .q-toggle__track {
+      box-shadow: 0 0 0px 7px currentColor;
+      outline-width: 2px;
+      outline-style: solid;
+      outline-offset: 5px;
+
+      // Dynamic values
+      outline-color: black;
+      opacity: 0.38;
+    
+      transition: 
+        color 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
+        outline-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), 
+        opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .q-toggle__thumb {
+      transform: scale(0.8);
+
+      transition:
+        transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+        // Part of Quasars CSS, don't overwrite it
+        left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      &:after {
+        box-shadow: none;
+        background-color: rgba(0, 0, 0, 0.38);
+        transition: background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
+
+    // Overrides for .q-toggle__inner--truthy
+    &--truthy {
+      .q-toggle__track {
+        outline-color: currentColor;
+        opacity: 1;
+      }
+
+      .q-toggle__thumb {
+        transform: scale(1);
+
+        &:after {
+          background-color: white;
+        }
+
+        .q-icon {
+          // Revert to the toggle's primary, instead of white
+          color: unset;
+          // Make Icon more visible
+          font-weight: bold;
+        }
+      }
+    }
   }
 }
