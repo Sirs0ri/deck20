@@ -28,7 +28,7 @@
 <script setup>
 import { useQuasar } from "quasar"
 import Calendar from "src/components/calendar/CalendarView.vue"
-import { getFormattedDate } from "src/components/calendar/calendar"
+import { getFormattedDate } from "src/utils/calendar"
 import { useCalendarStore } from "src/stores/calendar-store"
 
 const $q = useQuasar()

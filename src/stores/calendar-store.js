@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { ref, watch } from "vue"
 
-import { addDays, dateEquals } from "src/components/calendar/calendar"
+import { addDays, dateEquals } from "src/utils/calendar"
 import { useQuasar } from "quasar"
 
 export const useCalendarStore = defineStore("calendar", () => {

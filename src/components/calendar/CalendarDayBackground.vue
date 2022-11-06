@@ -13,7 +13,7 @@ import {
   getWeekday,
   getMonth,
   days,
-} from "./calendar"
+} from "src/utils/calendar"
 
 const props = defineProps({
   date: {

@@ -93,9 +93,6 @@
 import { ref, computed } from "vue"
 import { useCalendarStore } from "src/stores/calendar-store"
 
-import DayBackground from "./CalendarDayBackground.vue"
-import DayCell from "./CalendarDayItem.vue"
-
 import {
   substractDays,
   addDays,
@@ -104,7 +101,10 @@ import {
   months,
   dateEquals,
   getFormattedDate,
-} from "./calendar"
+} from "src/utils/calendar"
+
+import DayBackground from "./CalendarDayBackground.vue"
+import DayCell from "./CalendarDayItem.vue"
 
 const store = useCalendarStore()
 

@@ -21,7 +21,7 @@
 
 <script setup>
 
-import { getDayPopupString } from "./calendar"
+import { getDayPopupString } from "src/utils/calendar"
 
 defineProps({
   date: {
