@@ -48,12 +48,13 @@
     <q-footer
       v-if="!$q.screen.gt.xs"
       elevated
-      class="bg-grey-8 text-white"
+      class="bg-primary text-white"
     >
       <q-tabs
-        indicator-color="red"
         class="text-white"
         no-caps
+        narrow-indicator
+        switch-indicator
       >
         <q-route-tab
           v-for="link in essentialLinks"
@@ -157,3 +158,25 @@ export default defineComponent({
   },
 })
 </script>
+
+<style lang="scss">
+.q-tab {
+  margin: 4px 0;
+  border-radius: 4px;
+}
+
+.q-tab__indicator {
+  inset: 6px -10px;
+  height: auto;
+  z-index: -1;
+  /* Very large Border Radius in px, for pil shape */
+  border-radius: 60px;
+  /* aspect-ratio: 1/1; */
+  /* margin: auto 0px; */
+  opacity: 0;
+
+  .q-tab--active & {
+    opacity: 0.3;
+  }
+}
+</style>
