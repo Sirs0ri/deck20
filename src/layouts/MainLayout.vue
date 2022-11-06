@@ -70,93 +70,80 @@
   </q-layout>
 </template>
 
-<script>
-import { defineComponent, ref, onBeforeUnmount, computed } from "vue"
-import EssentialLink from "components/EssentialLink.vue"
+<script setup>
+import { ref, onBeforeUnmount, computed } from "vue"
 import { useQuasar } from "quasar"
+import EssentialLink from "components/EssentialLink.vue"
 
-export default defineComponent({
-  name: "MainLayout",
+import { isBex, useBridge } from "src/utils/bexBridge"
 
-  components: {
-    EssentialLink,
-  },
+// eslint-disable-next-line no-unused-vars
+const $q = useQuasar()
 
-  setup () {
-    // eslint-disable-next-line no-unused-vars
-    const $q = useQuasar()
+const leftDrawerOpen = ref(false)
 
-    const leftDrawerOpen = ref(false)
+const {
+  bexSend,
+  bexOn,
+  bexOff,
+} = useBridge($q.bex)
 
-    const isBex = process.env.MODE === "bex"
+// Set body class depending on what this is - bex, pwa, spa, etc.
+if (isBex) {
+  // TODO: This fails if it's not a BEX
+  window.bex_type = window.chrome.tabs.getCurrent().then(tab => {
+    if (tab === undefined) return "bex-popup"
+    else return "bex-options"
+  })
+  window.bex_type.then(type => { document.body.classList.add(type) })
+} else {
+  document.body.classList.add(process.env.MODE)
+}
 
-    // Set body class depending on what this is - bex, pwa, spa, etc.
-    if (isBex) {
-      // TODO: This fails if it's not a BEX
-      window.bex_type = window.chrome.tabs.getCurrent().then(tab => {
-        if (tab === undefined) return "bex-popup"
-        else return "bex-options"
-      })
-      window.bex_type.then(type => { document.body.classList.add(type) })
-    } else {
-      document.body.classList.add(process.env.MODE)
-    }
-
-    // Handle server state
-    const serverActive = ref(false)
-    if (isBex) {
-      $q.bex.send("query-server-status").then(({ data, respond }) => {
-        serverActive.value = data
-        respond()
-      })
-      const serverStatusCallback = ({ data, respond }) => {
-        serverActive.value = data
-        respond()
-      }
-      $q.bex.on("server-status", serverStatusCallback)
-
-      onBeforeUnmount(() => {
-        $q.bex.off("server-status", serverStatusCallback)
-      })
-    }
-
-    const linksList = computed(() => {
-      return [
-        {
-          title: "Übersicht",
-          caption: "quasar.dev",
-          icon: "sym_r_home",
-          link: "/",
-          class: "",
-        },
-        {
-          title: "Kalender",
-          caption: "quasar.dev",
-          icon: "sym_r_event",
-          link: "/calendar",
-          class: "icon-md-filled",
-        },
-        {
-          title: "Server",
-          caption: "quasar.dev",
-          icon: "sym_r_terminal",
-          link: "/server",
-          class: "",
-          alert: serverActive.value ? "green" : undefined,
-        },
-      ]
-    })
-
-    return {
-      serverActive,
-      essentialLinks: linksList,
-      leftDrawerOpen,
-      toggleLeftDrawer () {
-        leftDrawerOpen.value = !leftDrawerOpen.value
-      },
-    }
-  },
+// Handle server state
+const serverActive = ref(false)
+bexSend("query-server-status").then(({ data }) => {
+  if (!data) return
+  serverActive.value = data
 })
+
+const serverStatusCallback = ({ data, respond }) => {
+  serverActive.value = data
+  respond()
+}
+bexOn("server-status", serverStatusCallback)
+onBeforeUnmount(() => {
+  bexOff("server-status", serverStatusCallback)
+})
+
+const essentialLinks = computed(() => {
+  const l = []
+  l.push({
+    title: "Übersicht",
+    caption: "quasar.dev",
+    icon: "sym_r_home",
+    link: "/",
+    class: "",
+  })
+  l.push({
+    title: "Kalender",
+    icon: "sym_r_event",
+    link: "/calendar",
+    class: "icon-md-filled",
+  })
+  isBex && l.push({
+    title: "Server",
+    icon: "sym_r_terminal",
+    link: "/server",
+    class: "",
+    alert: serverActive.value ? "white" : undefined,
+  })
+  return l
+})
+
+function toggleLeftDrawer () {
+  leftDrawerOpen.value = !leftDrawerOpen.value
+}
 </script>
 
 <style lang="scss">
