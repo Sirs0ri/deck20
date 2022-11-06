@@ -1,12 +1,11 @@
-import { defineStore } from "pinia"
 import { ref, watch } from "vue"
+import { defineStore } from "pinia"
 
 import { addDays, dateEquals } from "src/utils/calendar"
-import { useQuasar } from "quasar"
+
+import { isBex, useBridge } from "src/utils/bexBridge"
 
 export const useCalendarStore = defineStore("calendar", () => {
-  const $q = useQuasar()
-
   const initialDate = { day: 0, month: 0, year: 0 }
   const today = ref({ ...initialDate })
 
@@ -16,11 +15,15 @@ export const useCalendarStore = defineStore("calendar", () => {
     persist()
   })
 
+  const {
+    bexSend,
+  } = useBridge()
+
   // Todo: handle store init without anything to restore
   async function restore () {
-    if ($q.bex != null) {
+    if (isBex) {
       // Restore state via BEX bridge
-      const { data } = await $q.bex.send("restore-store", "calendar")
+      const { data } = await bexSend("restore-store", "calendar")
       if ("today" in data) today.value = data.today
       return true
     } else {
@@ -39,9 +42,9 @@ export const useCalendarStore = defineStore("calendar", () => {
   }
 
   function persist () {
-    if ($q.bex != null) {
+    if (isBex) {
       // Persist state via BEX bridge
-      $q.bex.send("persist-store", {
+      bexSend("persist-store", {
         key: "calendar",
         value: {
           today: today.value,
