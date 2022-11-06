@@ -1,11 +1,21 @@
 <template>
   <div class="calendar">
-    <div class="season-icon">
-      <q-icon size="12em" :name="seasonIcon" />
-    </div>
-    <div class="season-icon">
-      <q-icon size="12em" :name="seasonIcon" />
-    </div>
+    <q-icon
+      v-for="icon in seasonIcons"
+      :key="`si_${icon}`"
+      class="season-icon"
+      size="12em"
+      :name="icon"
+      :style="icon === seasonIcon ? '' : 'scale: 0.9; opacity: 0'"
+    />
+    <q-icon
+      v-for="icon in seasonIcons"
+      :key="`si_${icon}`"
+      class="season-icon season-icon-top"
+      size="12em"
+      :name="icon"
+      :style="icon === seasonIcon ? '' : 'scale: 0.9; opacity: 0'"
+    />
 
     <div v-if="stateReady" class="header">
       <q-carousel
@@ -183,7 +193,16 @@ function isToday ({ day, month, year }) {
   return dateEquals(store.today, { day, month, year })
 }
 
+const seasonIcons = [
+  "sym_r_filter_drama",
+  "sym_r_ac_unit",
+  "sym_r_local_florist",
+  "sym_r_sunny",
+]
+
+/** Get an icon for the meterological (not astronomical) season. */
 const seasonIcon = computed(() => {
+  if (!stateReady.value) return ""
   switch (currentView.value.month) {
     case 3: // sep
     case 4: // okt
@@ -204,7 +223,7 @@ const seasonIcon = computed(() => {
       return "sym_r_sunny"
 
     default:
-      return "sym_r_sunny"
+      return ""
   }
 })
 
@@ -290,18 +309,21 @@ store.restored.then(success => {
   .season-icon{
     pointer-events: none;
     position: absolute;
-    top: -1.5em;
-    left: -3.5em;
+    top: -1.5rem;
+    left: -3.5rem;
+
+    transform: rotate(-20deg);
+    transition: scale 200ms, opacity 170ms;
 
     opacity: 0.07;
 
-    transform: rotate(-20deg);
+    scale: 1;
 
-  }
-  .season-icon + .season-icon {
-    color: $primary;
-    z-index: 5;
-    opacity: 0.05;
+    &.season-icon-top {
+      color: $primary;
+      z-index: 5;
+      opacity: 0.05;
+    }
   }
 
   .header {
