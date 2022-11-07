@@ -47,7 +47,7 @@ module.exports = configure(function (/* ctx */) {
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
       "roboto-font", // optional, you are not bound to it
-      "material-icons", // optional, you are not bound to it
+      // "material-icons", // optional, you are not bound to it
       "material-symbols-rounded",
     ],
 
@@ -106,11 +106,11 @@ module.exports = configure(function (/* ctx */) {
       plugins: [],
     },
 
-    animations: "all", // --- includes all animations
+    // animations: "all", // --- includes all animations
     // https://v2.quasar.dev/options/animations
-    // animations: [
-    //   "fadeIn",
-    // ],
+    animations: [
+      // "fadeIn",
+    ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#property-sourcefiles
     // sourceFiles: {
