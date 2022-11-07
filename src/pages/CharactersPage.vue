@@ -1,7 +1,7 @@
 <template>
   <q-page class="flex column q-gutter-y-md q-pa-md">
     <h3>Characters</h3>
-    <q-list>
+    <q-list class="relative-position">
       <input
         ref="nativeFilePicker"
         type="file"
@@ -10,127 +10,160 @@
         @input="evt => parseImportedFile(evt.target.files[0])"
       >
 
-      <q-expansion-item
-        expand-separator
-        icon="sym_r_account_circle"
-        label="Eigenschaften"
-        header-class="icon-md-filled text-bold"
-      >
+      <q-item v-if="currentCharacter">
+        <q-item-section>
+          <q-item-label>
+            {{ currentCharacter.generalData.name }}
+          </q-item-label>
+          <q-item-label caption>
+            {{ currentCharacter.generalData.profession }}
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <TransitionGroup name="list">
         <q-item
-          v-for="(attr) in attributes"
-          :key="`attr_${attr.short}`"
-          :inset-level="1"
+          key="header_attributes"
+          clickable
+          class="rounded-borders"
+          @click="expandedAttributes = !expandedAttributes"
         >
-          <q-item-section class="col-8">
-            {{ attr.name }}:
-          </q-item-section>
-          <q-item-section class="col-1 text-right">
-            {{ attr.value }}
-          </q-item-section>
-          <q-item-section class="col" />
-          <q-item-section side>
-            <q-btn
-              dense
-              flat
-              round
-              icon="mdi-dice-d20"
-              @click="rollAttribute(attr)"
+          <q-item-section avatar>
+            <q-icon
+              name="sym_r_account_circle"
+              color="primary"
+              class="icon-md-filled"
             />
           </q-item-section>
-          <!--  -->
-        </q-item>
-      </q-expansion-item>
-
-      <template
-        v-for="group in talentGroups"
-        :key="`talents_${group.name}`"
-      >
-        <q-item clickable @click="expandedGroups[group.name] = !expandedGroups[group.name]">
-          <q-item-section avatar>
-            <q-icon :name="group.icon" color="grey-8" />
-          </q-item-section>
           <q-item-section class="text-bold">
-            {{ group.name }}
+            Eigenschaften
           </q-item-section>
           <q-item-section side>
             <q-icon
               name="sym_r_expand_more"
-              :class="{'rotate-180': expandedGroups[group.name]}"
+              :class="{'rotate-180': expandedAttributes}"
               style="transition: transform 100ms"
             />
           </q-item-section>
         </q-item>
 
-        <!-- <q-slide-transition> -->
-        <!-- <div v-if="expandedGroups[group.name]"> -->
-        <q-item
-          v-for="talent in getItems(group.name)"
-          :key="`talent_${talent.name}`"
-          dense
-        >
-          <q-item-section
-            side
-            :class="{'icon-md-filled': isFav(talent.name)}"
+        <template v-if="expandedAttributes">
+          <q-item
+            v-for="(attr) in attributes"
+            :key="`attr_${attr.short}`"
+            dense
+            class="rounded-borders"
           >
-            <q-icon
-              name="sym_r_favorite"
-              class="talent-fav-icon cursor-pointer"
-              color="primary"
-              @click="toggleFav(talent.name)"
-            />
+            <q-item-section avatar />
+            <q-item-section class="col-6">
+              {{ attr.name }}:
+            </q-item-section>
+            <q-item-section class="col-1 text-right">
+              {{ attr.value }}
+            </q-item-section>
+            <q-item-section class="col" />
+            <q-item-section side>
+              <q-btn
+                dense
+                flat
+                round
+                icon="mdi-dice-d20"
+                @click="rollAttribute(attr)"
+              />
+            </q-item-section>
+          </q-item>
+        </template>
+
+        <template v-for="group in talentGroups" :key="`talents_${group.name}`">
+          <q-item
+            clickable
+            @click="expandedGroups[group.name] = !expandedGroups[group.name]"
+          >
+            <q-item-section avatar>
+              <q-icon :name="group.icon" color="grey-8" />
+            </q-item-section>
+            <q-item-section class="text-bold">
+              {{ group.name }}
+            </q-item-section>
+            <q-item-section side>
+              <q-icon
+                name="sym_r_expand_more"
+                :class="{'rotate-180': expandedGroups[group.name]}"
+                style="transition: transform 100ms"
+              />
+            </q-item-section>
+          </q-item>
+
+          <q-item
+            v-for="(talent) in getItems(group.name)"
+            :key="`talent_${talent.name}`"
+            dense
+          >
+            <q-item-section avatar>
+              <q-icon
+                name="sym_r_favorite"
+                class="talent-fav-icon cursor-pointer"
+                :class="{'icon-md-filled favorite': isFav(talent.name)}"
+                color="primary"
+                @click="toggleFav(talent.name)"
+              />
+            </q-item-section>
+            <q-item-section class="col-6">
+              {{ talent.name }}:
+            </q-item-section>
+            <q-item-section class="col-1 text-right">
+              {{ talent.value || "n.a." }}
+            </q-item-section>
+            <q-item-section class="col" />
+            <q-item-section side>
+              <q-btn
+                dense
+                flat
+                round
+                icon="mdi-dice-d20"
+                @click="rollTalent(talent)"
+              />
+            </q-item-section>
+          </q-item>
+        </template>
+
+        <q-separator key="spacer" />
+
+        <q-item
+          key="show_inactive"
+          clickable
+          :inset-level="1"
+          @click="showInactiveTalents = !showInactiveTalents"
+        >
+          <q-item-section>
+            Inaktive Talente anzeigen?
           </q-item-section>
-          <q-item-section class="col-8">
-            {{ talent.name }}:
-          </q-item-section>
-          <q-item-section class="col-1 text-right">
-            {{ talent.value || "n.a." }}
-          </q-item-section>
-          <q-item-section class="col" />
           <q-item-section side>
-            <q-btn
-              dense
-              flat
-              round
-              icon="mdi-dice-d20"
-              @click="rollTalent(talent)"
+            <q-toggle
+              v-model="showInactiveTalents"
+              checked-icon="sym_r_check"
             />
           </q-item-section>
         </q-item>
-      </template>
-
-      <q-separator />
-
-      <q-item
-        clickable
-        :inset-level="1"
-        @click="showInactiveTalents = !showInactiveTalents"
-      >
-        <q-item-section>
-          Inaktive Talente anzeigen?
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="showInactiveTalents"
-            checked-icon="sym_r_check"
+        <q-item key="search">
+          <q-input
+            v-model="talentSearch"
+            clearable
+            debounce="200"
+            class="full-width"
+            placeholder="Suche"
+            outlined
+            @clear="talentSearch = ''"
           />
-        </q-item-section>
-      </q-item>
-      <q-item :inset-level="1">
-        <q-input
-          v-model="talentSearch"
-          clearable
-          debounce="200"
-          class="full-width"
-          placeholder="Suche"
-          outlined
-        />
-      </q-item>
+        </q-item>
+      </TransitionGroup>
     </q-list>
 
     <!-- FAB -->
     <q-page-sticky
       position="bottom-right"
-      :offset="[18, 18]"
+      :offset="[32, 18]"
+      style="transform: none"
     >
       <q-fab
         ref="fab"
@@ -141,18 +174,19 @@
         @click="handleFabClick"
       >
         <q-fab-action
-          v-if="characterLoaded"
+          v-for="(c, key) in characters"
+          :key="`character_switcher_${key}`"
           square
           external-label
           color="white"
           text-color="primary"
           icon="sym_r_mood"
-          label="Anderer Charakter"
+          :label="c.generalData.name"
           label-class="bg-grey-3 text-grey-8 text-caption"
           label-position="left"
+          @click="store.setCurrentCharacter(key)"
         />
         <q-fab-action
-          v-if="characterLoaded"
           external-label
           color="white"
           text-color="primary"
@@ -168,80 +202,72 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch/* , computed */, computed } from "vue"
+import { reactive, ref, /* watch, */ computed } from "vue"
+import { storeToRefs } from "pinia"
+
+import { useCharacterStore } from "src/stores/characters-store"
 
 import { readFile, parseXML } from "src/utils/fileUtils"
 import {
   parseAttributes,
+  parseGeneral,
   parseTalents,
-  flippedTalentGroups,
   talentGroups,
 } from "src/utils/characterSheet"
 
-console.log(flippedTalentGroups)
-
-// const fabOpen = ref(false)
-// function toggleFab () {
-//   fabOpen.value = !fabOpen.value
-// }
-
-// const importedFile = ref(null)
-
 // ========== CHARACTER ==========
 
-const attributes = ref({})
-const talents = ref({})
+const store = useCharacterStore()
+const { characters, currentCharacter } = storeToRefs(store)
 
-const characterLoaded = computed(() => {
-  return Object.keys(talents.value).length
+store.restored.then(success => {
+  // console.log(characters.value)
+  // console.log(currentCharacter)
 })
 
+const attributes = computed(() => currentCharacter.value?.attributes ?? {})
+const talents = computed(() => currentCharacter.value?.talents ?? {})
+// const generalData = computed(() => currentCharacter.value?.generalData ?? {})
+
+const characterLoaded = computed(() => currentCharacter.value != null)
+
 // { groupName1: false, (...) }
-const expandedGroups = reactive(Object.fromEntries(talentGroups.map(({ name }) => [name, false])))
+const expandedAttributes = ref(false)
+const expandedGroups = reactive(Object.fromEntries(Object.keys(talentGroups).map(name => [name, false])))
 
 const showInactiveTalents = ref(false)
 const talentSearch = ref("")
 
-watch(talentSearch, (newVal, oldVal) => {
-  if (newVal) {
-    if (!oldVal) Object.keys(expandedGroups).forEach(g => { expandedGroups[g] = true })
-  } else Object.keys(expandedGroups).forEach(g => { expandedGroups[g] = false })
-})
-
 function getItems (groupName) {
   const result = {}
+
+  if (!currentCharacter.value) return result
+
   const expanded = expandedGroups[groupName]
   const re = new RegExp(talentSearch.value, "i")
-  // console.log("Getting Items for", groupName, talentGroups, expanded)
-
-  // console.log(Object.values(talents.value))
 
   const matches = Object.values(talents.value)
     .filter(t => (
       t.group === groupName &&
-      (expanded || isFav(t.name)) &&
-      (talentSearch.value === "" || t.name.match(re))
+      (expanded || isFav(t.name) ||
+      (talentSearch.value !== "" && t.name.match(re)))
     ))
     .map(t => [t.name, t])
 
   if (showInactiveTalents.value) {
-    const inactiveTalents = talentGroups
-      .find(group => group.name === groupName)
-      .talents
+    const inactiveTalents = talentGroups[groupName].talents
       .filter(t => (
-        (expanded || isFav(t)) &&
-        (talentSearch.value === "" || t.match(re))
+        expanded ||
+        isFav(t) ||
+        (talentSearch.value !== "" && t.match(re))
       ))
       .map(t => [t, { name: t }])
 
-    // console.log({ inactiveTalents, matches })
     Object.assign(result, Object.fromEntries(inactiveTalents))
-
-    // return Object.fromEntries([...matches, ...inactiveTalents])
   }
   Object.assign(result, Object.fromEntries(matches))
 
-  return result
+  return Object.values(result)
 }
 
 // ========== HELPERS ==========
@@ -283,9 +309,15 @@ async function parseImportedFile (newFile, ...args) {
   const doc = await readFile(newFile)
     .then(content => parseXML(content))
 
-  attributes.value = parseAttributes(doc)
+  const generalData = parseGeneral(doc)
+  const attributes = parseAttributes(doc)
+  const talents = parseTalents(doc)
 
-  talents.value = parseTalents(doc)
+  store.setCharacter(generalData.key, {
+    generalData,
+    attributes,
+    talents,
+  })
 }
 
 // ========== ROLL20 ==========
@@ -297,7 +329,6 @@ function rollTalent (talent) {
   if (talent == null) return
   console.log("Rolling", talent.name, "vs", talent.value, `(${talent.attributes})`)
 }
-
 </script>
 
 <style lang="scss">
@@ -316,9 +347,37 @@ function rollTalent (talent) {
   .talent-fav-icon {
     opacity: 0;
     transition: opacity 100ms;
+
+    &.favorite {
+      opacity: 0.3;
+    }
   }
+
   &:hover .talent-fav-icon {
     opacity: 0.3;
   }
+}
+
+/* list-... maps to the name attribute of the TransitionGroup above */
+.list-move, /* apply transition to moving elements */
+.list-leave-active {
+  transition: opacity 170ms ease, transform 200ms ease;
+}
+.list-enter-active{
+  transition: opacity 200ms ease, transform 170ms ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+  /* transform: scale(0.9) translateY(-30px); */
+}
+
+/* ensure leaving items are taken out of layout flow so that moving
+   animations can be calculated correctly. */
+.list-leave-active {
+  position: absolute;
+  width: 100%;
 }
 </style>

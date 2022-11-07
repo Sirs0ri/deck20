@@ -59,13 +59,13 @@ export function parseAttributes (xmlDocument) {
   return result
 }
 
-export const talentGroups = [
-  {
+export const talentGroups = {
+  "Gaben und anderes": {
     name: "Gaben und anderes",
     icon: "sym_r_star",
     talents: [],
   },
-  {
+  Kampf: {
     name: "Kampf",
     icon: "sym_r_swords",
     talents: [
@@ -98,7 +98,7 @@ export const talentGroups = [
       "Zweihandschwerter/-säbel",
     ],
   },
-  {
+  Körperlich: {
     name: "Körperlich",
     icon: "sym_r_directions_run",
     talents: [
@@ -122,7 +122,7 @@ export const talentGroups = [
       "Zechen",
     ],
   },
-  {
+  Gesellschaft: {
     name: "Gesellschaft",
     icon: "sym_r_groups",
     talents: [
@@ -138,7 +138,7 @@ export const talentGroups = [
       "Überzeugen",
     ],
   },
-  {
+  Natur: {
     name: "Natur",
     icon: "sym_r_nature",
     talents: [
@@ -151,7 +151,7 @@ export const talentGroups = [
       "Wildnisleben",
     ],
   },
-  {
+  Wissen: {
     name: "Wissen",
     icon: "sym_r_school",
     talents: [
@@ -180,7 +180,7 @@ export const talentGroups = [
       "Tierkunde",
     ],
   },
-  {
+  Sprachen: {
     name: "Sprachen",
     icon: "sym_r_flag",
     talents: [
@@ -223,7 +223,7 @@ export const talentGroups = [
     // "Sprachen kennen Zyklopäisch",
     ],
   },
-  {
+  Schriften: {
     name: "Schriften",
     icon: "sym_r_menu_book",
     talents: [
@@ -253,7 +253,7 @@ export const talentGroups = [
     // "Lesen/Schreiben Zhayad",
     ],
   },
-  {
+  Handwerk: {
     name: "Handwerk",
     icon: "sym_r_build",
     talents: [
@@ -306,11 +306,12 @@ export const talentGroups = [
       "Zimmermann",
     ],
   },
-]
+}
 
-export const flippedTalentGroups = Object.fromEntries(talentGroups
-  .map(({ name, talents }) => talents.map(t => [t, name]))
-  .flat(),
+export const flippedTalentGroups = Object.fromEntries(
+  Object.values(talentGroups)
+    .map(({ name, talents }) => talents.map(t => [t, name]))
+    .flat(),
 )
 
 /**
