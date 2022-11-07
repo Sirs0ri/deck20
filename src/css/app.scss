@@ -1,5 +1,19 @@
 // app global css in SCSS form
 
+html, body, #q-app, .q-layout, .q-page-container {
+  height: 100%;
+}
+
+.page-wrapper {
+  // This will sit between the .q-page-container and the .q-page inside it,
+  // filling all available space between header and footer.
+  // It'll make sure the content scroll between the app-bars, while also
+  // ustilizing scrollbar-gutter to prevent layout shifts.
+  height: 100%;
+  overflow: auto;
+  position: relative;
+}
+
 /* Icons are non-filled by default */
 .material-symbols-rounded {
   font-variation-settings:

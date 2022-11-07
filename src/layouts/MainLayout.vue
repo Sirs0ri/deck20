@@ -1,12 +1,12 @@
 <template>
-  <q-layout view="lHh Lpr lFf" style="min-width: 360px; min-height: 520px">
+  <q-layout view="lHh Lpr lFf" style="min-width: 360px; min-height: 600px">
     <q-header v-if="$q.screen.gt.xs" elevated>
       <q-toolbar>
         <q-btn
           flat
           dense
           round
-          icon="menu"
+          icon="sym_r_menu"
           aria-label="Menu"
           @click="toggleLeftDrawer"
         />
@@ -42,7 +42,11 @@
     </q-drawer>
 
     <q-page-container>
-      <router-view />
+      <div class="page-wrapper">
+        <q-scroll-area class="absolute fit">
+          <router-view />
+        </q-scroll-area>
+      </div>
     </q-page-container>
 
     <q-footer
