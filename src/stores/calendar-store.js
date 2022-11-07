@@ -59,6 +59,6 @@ export const useCalendarStore = defineStore("calendar", () => {
     today,
     increment,
     restored,
-    persist,
+    // persist,
   }
 })
