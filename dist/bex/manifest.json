@@ -1,0 +1,68 @@
+{
+  "manifest_version": 3,
+  "icons": {
+    "16": "www/icons/icon-16x16.png",
+    "32": "www/icons/icon-32x32.png",
+    "48": "www/icons/icon-48x48.png",
+    "128": "www/icons/icon-128x128.png"
+  },
+  "permissions": [
+    "storage",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "*://app.roll20.net/editor/",
+    "*://app.roll20.net/editor",
+    "*://app.roll20.net/editor?*",
+    "*://app.roll20.net/editor#*",
+    "*://cdn.roll20.net/*"
+  ],
+  "action": {
+    "default_popup": "www/index.html#/calendar",
+    "default_icon": {
+      "16": "www/icons/icon-16x16-bw.png",
+      "24": "www/icons/icon-24x24-bw.png",
+      "32": "www/icons/icon-32x32-bw.png"
+    },
+    "default_title": "Deck20"
+  },
+  "options_page": "www/index.html#/",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://app.roll20.net/editor/",
+        "*://app.roll20.net/editor",
+        "*://app.roll20.net/editor?*",
+        "*://app.roll20.net/editor#*",
+        "*://cdn.roll20.net/*"
+      ],
+      "css": [
+        "assets/content.css"
+      ],
+      "js": [
+        "my-content-script.js"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*"
+      ],
+      "matches": [
+        "*://app.roll20.net/*",
+        "*://cdn.roll20.net/*"
+      ]
+    }
+  ],
+  "name": "Deck20",
+  "short_name": "Deck20",
+  "description": "Connect Roll20 to a Stream-Deck and add DSA related helpers",
+  "version": "0.0.5"
+}
