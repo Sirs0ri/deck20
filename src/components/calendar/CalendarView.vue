@@ -100,7 +100,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
+import { ref, unref, computed } from "vue"
+import { storeToRefs } from "pinia"
 import { useCalendarStore } from "src/stores/calendar-store"
 
 import {
@@ -117,6 +118,7 @@ import DayBackground from "./CalendarDayBackground.vue"
 import DayCell from "./CalendarDayItem.vue"
 
 const store = useCalendarStore()
+const { today } = storeToRefs(store)
 
 // ========== UI TOOLS ==========
 const stateReady = ref(false)
@@ -134,17 +136,21 @@ function carouselPrev () {
 const currentViewDays = computed(() => {
   if (!stateReady.value) return []
 
-  const firstOfThisMonth = { ...currentView.value, day: 1 }
-  const lastOfThisMonth = { ...currentView.value, day: getMonth(currentView.value).days }
+  const view = unref(currentView)
+
+  const firstOfThisMonth = { ...view, day: 1 }
+  const lastOfThisMonth = { ...view, day: getMonth(view).days }
 
   // Offsets because not every month starts on a "monday"
   const daysBeforeCount = getWeekday(firstOfThisMonth).index - 1
   // Days of this month
-  const daysCount = getMonth(currentView.value).days
+  const daysCount = getMonth(view).days
   // Days to fill the remaining cells of the 6x7 grid
   const daysAfterCount = (6 * 7) - daysBeforeCount - daysCount
 
   const days = []
+
+  let dayIndex = 0
 
   for (let i = daysBeforeCount; i > 0; i--) {
     const date = substractDays(firstOfThisMonth, i)
@@ -155,11 +161,12 @@ const currentViewDays = computed(() => {
         nextMonth: false,
         today: isToday(date),
       },
-    },
-    )
+      gridArea: `week ${Math.floor(dayIndex / 7) + 1} / day ${(dayIndex % 7) + 1}`,
+    })
+    dayIndex++
   }
   for (let i = 1; i <= daysCount; i++) {
-    const date = { ...currentView.value, day: i }
+    const date = { ...view, day: i }
     days.push({
       bind: {
         date,
@@ -167,8 +174,9 @@ const currentViewDays = computed(() => {
         nextMonth: false,
         today: isToday(date),
       },
-    },
-    )
+      gridArea: `week ${Math.floor(dayIndex / 7) + 1} / day ${(dayIndex % 7) + 1}`,
+    })
+    dayIndex++
   }
   for (let i = 1; i <= daysAfterCount; i++) {
     const date = addDays(lastOfThisMonth, i)
@@ -179,18 +187,16 @@ const currentViewDays = computed(() => {
         nextMonth: true,
         today: isToday(date),
       },
-    },
-    )
+      gridArea: `week ${Math.floor(dayIndex / 7) + 1} / day ${(dayIndex % 7) + 1}`,
+    })
+    dayIndex++
   }
 
-  return days.map((day, i) => ({
-    ...day,
-    gridArea: `week ${Math.floor(i / 7) + 1} / day ${(i % 7) + 1}`,
-  }))
+  return days
 })
 
 function isToday ({ day, month, year }) {
-  return dateEquals(store.today, { day, month, year })
+  return dateEquals(today.value, { day, month, year })
 }
 
 const seasonIcons = [
@@ -245,7 +251,7 @@ function showPreviousMonth () {
   }
 }
 function showToday () {
-  currentView.value = { ...store.today, day: 1 }
+  currentView.value = { ...today.value, day: 1 }
 }
 
 let doubleClick = false
@@ -253,7 +259,7 @@ function handleDayClick (day, clickEvt) {
   // if CTRL is held, a doubleclick changes "today"
   if (clickEvt.ctrlKey) {
     if (doubleClick) {
-      store.today = day.bind.date
+      today.value = day.bind.date
     } else {
       doubleClick = true
       setTimeout(() => {
