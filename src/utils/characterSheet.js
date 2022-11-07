@@ -19,6 +19,32 @@ const attributes = {
   fk: { value: 0, short: "fk", name: "Basis-FK" },
 }
 
+export function parseGeneral (xmlDocument) {
+  const heroEl = xmlDocument.querySelector("held")
+  const name = heroEl.getAttribute("name")
+  const key = heroEl.getAttribute("key")
+
+  const bdayEl = xmlDocument.querySelector("aussehen")
+  const day = parseInt(bdayEl.getAttribute("gbtag"))
+  const month = parseInt(bdayEl.getAttribute("gbmonat"))
+  const year = parseInt(bdayEl.getAttribute("gbjahr"))
+  const birthday = { day, month, year }
+
+  const genderEl = xmlDocument.querySelector("geschlecht")
+  const gender = genderEl.getAttribute("name")
+
+  const profEl = xmlDocument.querySelector("ausbildung[art='Hauptprofession']")
+  const profession = profEl.getAttribute("string")
+
+  return {
+    key,
+    birthday,
+    gender,
+    name,
+    profession,
+  }
+}
+
 export function parseAttributes (xmlDocument) {
   const result = { ...attributes }
 
@@ -27,7 +53,8 @@ export function parseAttributes (xmlDocument) {
     if (!xmlEl) continue
 
     const val = xmlEl.getAttribute("value")
-    result[attribute].value = parseInt(val)
+    const mod = xmlEl.getAttribute("mod")
+    result[attribute].value = parseInt(val) + parseInt(mod)
   }
   return result
 }
