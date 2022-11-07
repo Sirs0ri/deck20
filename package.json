@@ -1,14 +1,16 @@
 {
-  "name": "roll20-deck",
+  "name": "deck20",
   "version": "0.0.5",
-  "description": "Connect Roll20 to a Stream-Deck",
-  "productName": "Roll20-Deck",
+  "description": "Connect Roll20 to a Stream-Deck and add DSA related helpers/tools!",
+  "productName": "Deck20",
   "author": "Maximilian Ertl <ertl.maxi@gmail.com>",
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
     "test": "echo \"No test specified\" && exit 0",
-    "dev": "quasar d -m bex"
+    "dev": "quasar d -m bex",
+    "deploy-bex": "quasar build -m bex && git add -f dist/bex && node -p -e \"'[ BEX BUILD ] Deck20 '+ require('./package.json').version\" | git commit -F - --no-gpg-sign && git subtree push --prefix dist/bex origin release/bex",
+    "force-push-deployment": "git push origin `git subtree split --prefix dist/bex main`:release/bex --force"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
