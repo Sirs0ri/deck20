@@ -61,26 +61,25 @@
 
         <template v-if="expandedAttributes">
           <q-item
-            v-for="(attr) in attributes"
+            v-for="(attr) in currentCharacter?.attributes"
             :key="`attr_${attr.short}`"
             dense
             class="rounded-borders"
           >
             <q-item-section avatar />
-            <q-item-section class="col-6">
+            <q-item-section class="col">
               {{ attr.name }}:
             </q-item-section>
-            <q-item-section class="col-1 text-right">
+            <q-item-section class="col-auto text-right q-pr-md">
               {{ attr.value }}
             </q-item-section>
-            <q-item-section class="col" />
             <q-item-section side>
               <q-btn
                 dense
                 flat
                 round
                 icon="mdi-dice-d20"
-                @click="rollAttribute(attr)"
+                @click="roll(attr)"
               />
             </q-item-section>
           </q-item>
@@ -120,20 +119,51 @@
                 @click="toggleFav(talent.name)"
               />
             </q-item-section>
-            <q-item-section class="col-6">
-              {{ talent.name }}:
+            <q-item-section class="col">
+              {{ talent.name }}{{ talent.specializations?.length ? '*' : '' }}{{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}:
             </q-item-section>
-            <q-item-section class="col-1 text-right">
-              {{ talent.value || "n.a." }}
+            <q-item-section class="col-auto text-right q-pr-md">
+              {{ talent.value }}
             </q-item-section>
-            <q-item-section class="col" />
+
             <q-item-section side>
               <q-btn
+                v-if="talent.extraRolls"
                 dense
                 flat
                 round
                 icon="mdi-dice-d20"
-                @click="rollTalent(talent)"
+              >
+                <q-menu
+                  auto-close
+                  anchor="top right"
+                  self="top right"
+                >
+                  <q-list style="min-width: 100px">
+                    <q-item
+                      clickable
+                      @click="roll(talent)"
+                    >
+                      <q-item-section>{{ talent.name }}: {{ talent.value ?? 'n.a.' }}</q-item-section>
+                    </q-item>
+                    <q-item
+                      v-for="(value, extraRoll) in talent.extraRolls"
+                      :key="extraRoll"
+                      clickable
+                      @click="roll({...talent, name: `${talent.name} ${extraRoll}`, value, attributes: undefined})"
+                    >
+                      <q-item-section>{{ extraRoll }}: {{ value ?? 'n.a.' }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+              <q-btn
+                v-else
+                dense
+                flat
+                round
+                icon="mdi-dice-d20"
+                @click="roll(talent)"
               />
             </q-item-section>
           </q-item>
@@ -203,38 +233,31 @@
 </template>
 
 <script setup>
-import { reactive, ref, /* watch, */ computed } from "vue"
+import { reactive, ref, computed } from "vue"
 import { storeToRefs } from "pinia"
 
 import { useCharacterStore } from "src/stores/characters-store"
 
 import { readFile, parseXML } from "src/utils/fileUtils"
 import {
-  parseAttributes,
-  parseGeneral,
-  parseTalents,
+  parseCharacter,
   talentGroups,
 } from "src/utils/characterSheet"
 
 // ========== CHARACTER ==========
 
 const store = useCharacterStore()
-const { characters, currentCharacter } = storeToRefs(store)
+const { currentCharacter, characters } = storeToRefs(store)
 
 store.restored.then(success => {
-  // console.log(characters.value)
-  // console.log(currentCharacter)
+  // Note: if anything needs to be done after restoring the store, do it here
 })
-
-const attributes = computed(() => currentCharacter.value?.attributes ?? {})
-const talents = computed(() => currentCharacter.value?.talents ?? {})
-// const generalData = computed(() => currentCharacter.value?.generalData ?? {})
 
 const characterLoaded = computed(() => currentCharacter.value != null)
 
-// { groupName1: false, (...) }
-const expandedAttributes = ref(false)
+// Create an object like this: { groupName1: false, (...) }
 const expandedGroups = reactive(Object.fromEntries(Object.keys(talentGroups).map(name => [name, false])))
+const expandedAttributes = ref(false)
 
 const showInactiveTalents = ref(false)
 const talentSearch = ref("")
@@ -247,7 +270,7 @@ function getItems (groupName) {
   const expanded = expandedGroups[groupName]
   const re = new RegExp(talentSearch.value, "i")
 
-  const matches = Object.values(talents.value)
+  const matches = Object.values(currentCharacter.value.talents)
     .filter(t => (
       t.group === groupName &&
       (expanded || isFav(t.name) ||
@@ -290,7 +313,7 @@ function toggleFav (talent) {
 
 const fab = ref(null)
 function handleFabClick (evt) {
-  if (characterLoaded.value) return
+  if (Object.keys(characters.value).length) return
   pickCharacterFile(evt)
 
   fab.value.hide()
@@ -306,29 +329,31 @@ function pickCharacterFile (evt) {
   nativeFilePicker.value.click(evt)
 }
 
-async function parseImportedFile (newFile, ...args) {
+async function parseImportedFile (newFile) {
+  // console.log("parsing new charactersheet...")
+
   const doc = await readFile(newFile)
     .then(content => parseXML(content))
 
-  const generalData = parseGeneral(doc)
-  const attributes = parseAttributes(doc)
-  const talents = parseTalents(doc)
+  const character = parseCharacter(doc)
 
-  store.setCharacter(generalData.key, {
-    generalData,
-    attributes,
-    talents,
-  })
+  store.setCharacter(character.generalData.key, character)
 }
 
 // ========== ROLL20 ==========
 
-function rollAttribute (attribute) {
-  console.log("Rolling", attribute.name, "vs", attribute.value)
-}
-function rollTalent (talent) {
-  if (talent == null) return
-  console.log("Rolling", talent.name, "vs", talent.value, `(${talent.attributes})`)
+function roll (props) {
+  const {
+    name,
+    value,
+    attributes = undefined,
+  } = props
+
+  if (attributes) {
+    console.log("Rolling", name, "vs", value, `(${attributes})`)
+    return
+  }
+  console.log("Rolling", name, "vs", value)
 }
 </script>
 
@@ -356,6 +381,21 @@ function rollTalent (talent) {
 
   &:hover .talent-fav-icon {
     opacity: 0.3;
+  }
+}
+
+.extra-roll-button {
+  flex: 1;
+
+  i {
+    display: none;
+  }
+
+  &:hover {
+    flex: 100;
+    i {
+      display: revert;
+    }
   }
 }
 

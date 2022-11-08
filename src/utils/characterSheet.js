@@ -3,7 +3,7 @@
  * Docs: http://forum.helden-software.de
  */
 
-const attributes = {
+const DEFAULT_ATTRIBUTES = {
   Mut: { value: 0, short: "MU", name: "Mut" },
   Klugheit: { value: 0, short: "KL", name: "Klugheit" },
   Intuition: { value: 0, short: "IN", name: "Intuition" },
@@ -46,9 +46,14 @@ export function parseGeneral (xmlDocument) {
 }
 
 export function parseAttributes (xmlDocument) {
-  const result = { ...attributes }
+  const result = {}
 
-  for (const attribute of Object.keys(attributes)) {
+  for (const attribute of Object.keys(DEFAULT_ATTRIBUTES)) {
+    // Set default. Destructutign here to break reactivity is important,
+    // otherwise multiple characters will share the same attributes.
+    result[attribute] = { ...DEFAULT_ATTRIBUTES[attribute] }
+
+    // Get attribute value and fill it in
     const xmlEl = xmlDocument.querySelector(`held>eigenschaften eigenschaft[name='${attribute}']`)
     if (!xmlEl) continue
 
@@ -59,14 +64,26 @@ export function parseAttributes (xmlDocument) {
   return result
 }
 
+const GROUPS = {
+  OTHER: "Gaben und anderes",
+  COMBAT: "Kampf",
+  PHYSICAL: "Körperlich",
+  SOCIAL: "Gesellschaft",
+  NATURE: "Natur",
+  KNOWLEDGE: "Wissen",
+  LANGUAGES: "Sprachen",
+  SCRIPTS: "Schriften",
+  CRAFTS: "Handwerk",
+}
+
 export const talentGroups = {
-  "Gaben und anderes": {
-    name: "Gaben und anderes",
+  [GROUPS.OTHER]: {
+    name: GROUPS.OTHER,
     icon: "sym_r_star",
     talents: [],
   },
-  Kampf: {
-    name: "Kampf",
+  [GROUPS.COMBAT]: {
+    name: GROUPS.COMBAT,
     icon: "sym_r_swords",
     talents: [
       "Anderthalbhänder",
@@ -98,8 +115,8 @@ export const talentGroups = {
       "Zweihandschwerter/-säbel",
     ],
   },
-  Körperlich: {
-    name: "Körperlich",
+  [GROUPS.PHYSICAL]: {
+    name: GROUPS.PHYSICAL,
     icon: "sym_r_directions_run",
     talents: [
       "Akrobatik",
@@ -122,8 +139,8 @@ export const talentGroups = {
       "Zechen",
     ],
   },
-  Gesellschaft: {
-    name: "Gesellschaft",
+  [GROUPS.SOCIAL]: {
+    name: GROUPS.SOCIAL,
     icon: "sym_r_groups",
     talents: [
       "Betören",
@@ -138,8 +155,8 @@ export const talentGroups = {
       "Überzeugen",
     ],
   },
-  Natur: {
-    name: "Natur",
+  [GROUPS.NATURE]: {
+    name: GROUPS.NATURE,
     icon: "sym_r_nature",
     talents: [
       "Fährtensuchen",
@@ -151,8 +168,8 @@ export const talentGroups = {
       "Wildnisleben",
     ],
   },
-  Wissen: {
-    name: "Wissen",
+  [GROUPS.KNOWLEDGE]: {
+    name: GROUPS.KNOWLEDGE,
     icon: "sym_r_school",
     talents: [
       "Anatomie",
@@ -180,8 +197,8 @@ export const talentGroups = {
       "Tierkunde",
     ],
   },
-  Sprachen: {
-    name: "Sprachen",
+  [GROUPS.LANGUAGES]: {
+    name: GROUPS.LANGUAGES,
     icon: "sym_r_flag",
     talents: [
     // "Sprachen kennen Alaani",
@@ -223,8 +240,8 @@ export const talentGroups = {
     // "Sprachen kennen Zyklopäisch",
     ],
   },
-  Schriften: {
-    name: "Schriften",
+  [GROUPS.SCRIPTS]: {
+    name: GROUPS.SCRIPTS,
     icon: "sym_r_menu_book",
     talents: [
     // "Lesen/Schreiben (Alt-)Imperiale Zeichen",
@@ -253,8 +270,8 @@ export const talentGroups = {
     // "Lesen/Schreiben Zhayad",
     ],
   },
-  Handwerk: {
-    name: "Handwerk",
+  [GROUPS.CRAFTS]: {
+    name: GROUPS.CRAFTS,
     icon: "sym_r_build",
     talents: [
       "Abrichten",
@@ -319,10 +336,10 @@ export const flippedTalentGroups = Object.fromEntries(
  * @param {String} talentName Name of the talent
  */
 export function getTalentGroup (talentName) {
-  if (talentName.startsWith("Lesen/Schreiben")) return "Schriften"
-  if (talentName.startsWith("Sprachen kennen")) return "Sprachen"
+  if (talentName.startsWith("Lesen/Schreiben")) return GROUPS.SCRIPTS
+  if (talentName.startsWith("Sprachen kennen")) return GROUPS.LANGUAGES
   const group = flippedTalentGroups[talentName]
-  return group ?? "Gaben und anderes"
+  return group ?? GROUPS.OTHER
 }
 
 function talentRollsToArray (str) {
@@ -338,16 +355,74 @@ export function parseTalents (xmlDocument) {
 
   const result = {}
 
+  const baseAttackEl = xmlDocument.querySelector("held>eigenschaften eigenschaft[name='fk']")
+  const baseAttack = parseInt(baseAttackEl.getAttribute("value")) + parseInt(baseAttackEl.getAttribute("mod"))
+
+  const allSpecializations = {}
+  const specializationEls = xmlDocument.querySelectorAll("held>sf sonderfertigkeit talent")
+
+  for (const specEl of specializationEls) {
+    const talentName = specEl.getAttribute("name")
+    const spec = specEl.parentNode.querySelector("spezialisierung")
+    if (spec) {
+      if (!allSpecializations[talentName]) allSpecializations[talentName] = []
+      allSpecializations[talentName].push(spec.getAttribute("name"))
+    }
+  }
+
   for (const el of talentEls) {
     const name = el.getAttribute("name")
     const attributes = talentRollsToArray(el.getAttribute("probe"))
+    const group = getTalentGroup(name)
+    const value = parseInt(el.getAttribute("value"))
+    const specializations = allSpecializations[name] ?? []
+
     result[name] = {
       name,
       attributes,
-      value: el.getAttribute("value"),
-      group: getTalentGroup(name),
+      value,
+      group,
+      specializations,
+      extraRolls: {},
+    }
+
+    specializations.length && console.log(name, "has a specialization:", specializations)
+    for (const spec of specializations) {
+      result[name].extraRolls[spec] = value + 2
+    }
+
+    if (group === GROUPS.COMBAT) {
+      const combatEl = xmlDocument.querySelector(`held>kampf kampfwerte[name="${name}"]`)
+
+      if (combatEl) {
+        // melee weapon talent, has attack & parry
+        const AT = parseInt(combatEl.querySelector("attacke").getAttribute("value"))
+        result[name].extraRolls.AT = AT
+        const PA = parseInt(combatEl.querySelector("parade").getAttribute("value"))
+        result[name].extraRolls.PA = PA
+
+        for (const spec of specializations) {
+          result[name].extraRolls["AT " + spec] = AT + 1
+          result[name].extraRolls["PA " + spec] = PA + 1
+        }
+      } else {
+        // ranged weapon talent, has only ranged attack
+        result[name].extraRolls.FK = baseAttack + value
+      }
     }
   }
 
   return result
+}
+
+export function parseCharacter (xmlDocument) {
+  const generalData = parseGeneral(xmlDocument)
+  const attributes = parseAttributes(xmlDocument)
+  const talents = parseTalents(xmlDocument)
+
+  return {
+    generalData,
+    attributes,
+    talents,
+  }
 }

@@ -47,12 +47,20 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
     if (isBex) {
       // Restore state via BEX bridge
       const { data } = await bexSend("restore-store", STORE_NAME)
-      if ("characters" in data) characters.value = data.characters
-      if ("currentCharacterKey" in data) currentCharacterKey.value = data.currentCharacterKey
-      return true
-    } else {
+      if ("characters" in data) {
+        for (const key in data.characters) {
+          if (Object.hasOwnProperty.call(data.characters, key)) {
+            const character = data.characters[key]
+            setCharacter(key, character)
+          }
+        }
+
+        if ("currentCharacterKey" in data) currentCharacterKey.value = data.currentCharacterKey
+        return true
+      } else {
       // TODO: this is not a BEX, store will have to be restored some other way
-      return true
+        return true
+      }
     }
   }
 
