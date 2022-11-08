@@ -120,7 +120,9 @@
               />
             </q-item-section>
             <q-item-section class="col">
-              {{ talent.name }}{{ talent.specializations?.length ? '*' : '' }}{{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}:
+              {{ talent.name }}
+              {{ talent.specializations?.length ? '*' : '' }}
+              {{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}{{ talent.value != null ? ':' : '' }}
             </q-item-section>
             <q-item-section class="col-auto text-right q-pr-md">
               {{ talent.value }}
@@ -128,7 +130,7 @@
 
             <q-item-section side>
               <q-btn
-                v-if="talent.extraRolls"
+                v-if="talent.extraRolls && Object.keys(talent.extraRolls).length"
                 dense
                 flat
                 round
@@ -144,7 +146,12 @@
                       clickable
                       @click="roll(talent)"
                     >
-                      <q-item-section>{{ talent.name }}: {{ talent.value ?? 'n.a.' }}</q-item-section>
+                      <q-item-section>
+                        {{ talent.name }}:
+                      </q-item-section>
+                      <q-item-section side class="text-primary">
+                        {{ talent.value ?? 'n.a.' }}
+                      </q-item-section>
                     </q-item>
                     <q-item
                       v-for="(value, extraRoll) in talent.extraRolls"
@@ -152,7 +159,12 @@
                       clickable
                       @click="roll({...talent, name: `${talent.name} ${extraRoll}`, value, attributes: undefined})"
                     >
-                      <q-item-section>{{ extraRoll }}: {{ value ?? 'n.a.' }}</q-item-section>
+                      <q-item-section>
+                        {{ extraRoll }}:
+                      </q-item-section>
+                      <q-item-section side class="text-primary">
+                        {{ value ?? 'n.a.' }}
+                      </q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -163,6 +175,7 @@
                 flat
                 round
                 icon="mdi-dice-d20"
+                :disable="talent.value == null"
                 @click="roll(talent)"
               />
             </q-item-section>
