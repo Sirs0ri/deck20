@@ -19,6 +19,7 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
 
   function setCurrentCharacter (key) {
     currentCharacterKey.value = key
+    persist()
   }
 
   const currentCharacter = computed(() => characters.value[currentCharacterKey.value])
