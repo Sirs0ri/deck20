@@ -1,11 +1,11 @@
-import { b as QItem, Q as QItemSection, a as QItemLabel, c as QList } from "./QItem.28171123.js";
-import { w as watch, o as onMounted, a as onBeforeUnmount, d as inject, ad as formKey, g as getCurrentInstance, r as ref, c as computed, z as debounce, ae as injectProp, af as onBeforeUpdate, s as stopAndPrevent, b as nextTick, A as onDeactivated, B as onActivated, i as isRuntimeSsrPreHydration, h, t as prevent, J as uid, $ as Transition, G as shouldIgnoreKey, j as client, u as stop, F as isKeyCode, v as position, ag as toRaw, n as noop, ah as fabKey, C as provide, e as emptyRenderFn, f as layoutKey, a7 as defineStore, T as unref, a9 as storeToRefs, K as reactive, M as openBlock, N as createBlock, O as withCtx, P as createVNode, U as createBaseVNode, R as createTextVNode, S as toDisplayString, Q as createCommentVNode, ai as TransitionGroup, _ as normalizeClass, V as createElementBlock, W as renderList, X as Fragment } from "./index.295f82e9.js";
-import { Q as QIcon, h as QSpinner, i as childHasFocus, j as useSize, k as useSizeProps, b as QBtn } from "./QBtn.5b5977d6.js";
-import { b as useDarkProps, e as useDark, u as useModelToggleProps, d as useModelToggleEmits, l as useTick, f as useTimeout, i as useModelToggle, j as getScrollTarget } from "./use-tick.08c02aa5.js";
-import { h as hSlot, c as createComponent, e as hMergeSlot } from "./render.1283e78e.js";
-import { h as addFocusFn, i as removeFocusFn, u as useAnchorProps, a as useTransitionProps, v as validatePosition, b as validateOffset, c as useTransition, d as useScrollTarget, e as useAnchor, f as usePortal, r as removeClickOutside, s as setPosition, p as parsePosition, j as closePortalMenus, g as addClickOutside } from "./position-engine.5fff761d.js";
-import { Q as QPage } from "./QPage.1363b0e6.js";
-import { u as useBridge } from "./bexBridge.197c9c8f.js";
+import { b as QItem, Q as QItemSection, a as QItemLabel, c as QList } from "./QItem.e7b23ba2.js";
+import { w as watch, o as onMounted, a as onBeforeUnmount, d as inject, ad as formKey, g as getCurrentInstance, r as ref, c as computed, z as debounce, ae as injectProp, af as onBeforeUpdate, s as stopAndPrevent, b as nextTick, A as onDeactivated, B as onActivated, i as isRuntimeSsrPreHydration, h, t as prevent, J as uid, $ as Transition, G as shouldIgnoreKey, j as client, u as stop, F as isKeyCode, v as position, ag as toRaw, n as noop, ah as fabKey, C as provide, e as emptyRenderFn, f as layoutKey, a7 as defineStore, T as unref, a9 as storeToRefs, K as reactive, M as openBlock, N as createBlock, O as withCtx, P as createVNode, U as createBaseVNode, R as createTextVNode, S as toDisplayString, Q as createCommentVNode, ai as TransitionGroup, _ as normalizeClass, V as createElementBlock, W as renderList, X as Fragment } from "./index.15c200ba.js";
+import { Q as QIcon, h as QSpinner, i as childHasFocus, j as useSize, k as useSizeProps, b as QBtn } from "./QBtn.7c63eac2.js";
+import { b as useDarkProps, e as useDark, u as useModelToggleProps, d as useModelToggleEmits, l as useTick, f as useTimeout, i as useModelToggle, j as getScrollTarget } from "./use-tick.8d5452b3.js";
+import { h as hSlot, c as createComponent, e as hMergeSlot } from "./render.24fd1c1b.js";
+import { h as addFocusFn, i as removeFocusFn, u as useAnchorProps, a as useTransitionProps, v as validatePosition, b as validateOffset, c as useTransition, d as useScrollTarget, e as useAnchor, f as usePortal, r as removeClickOutside, s as setPosition, p as parsePosition, j as closePortalMenus, g as addClickOutside } from "./position-engine.1e4f67ac.js";
+import { Q as QPage } from "./QPage.039bc1a9.js";
+import { u as useBridge } from "./bexBridge.3bf7cb1d.js";
 function useFormChild({ validate, resetValidation, requiresQForm }) {
   const $form = inject(formKey, false);
   if ($form !== false) {
@@ -2995,23 +2995,23 @@ const _sfc_main = {
                     createVNode(QItem, {
                       key: "show_inactive",
                       clickable: "",
-                      "inset-level": 1,
                       onClick: _cache[5] || (_cache[5] = ($event) => showInactiveTalents.value = !showInactiveTalents.value)
                     }, {
                       default: withCtx(() => [
-                        createVNode(QItemSection, null, {
-                          default: withCtx(() => [
-                            createTextVNode(" Inaktive Talente anzeigen? ")
-                          ]),
-                          _: 1
-                        }),
                         createVNode(QItemSection, { side: "" }, {
                           default: withCtx(() => [
                             createVNode(QToggle, {
                               modelValue: showInactiveTalents.value,
                               "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => showInactiveTalents.value = $event),
-                              "checked-icon": "sym_r_check"
+                              "checked-icon": "sym_r_check",
+                              style: { "margin": "-0.5em -0.2em -0.5em -1em" }
                             }, null, 8, ["modelValue"])
+                          ]),
+                          _: 1
+                        }),
+                        createVNode(QItemSection, null, {
+                          default: withCtx(() => [
+                            createTextVNode(" Inaktive Talente anzeigen? ")
                           ]),
                           _: 1
                         })

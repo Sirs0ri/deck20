@@ -1,6 +1,6 @@
-import { b as QBtn } from "./QBtn.5b5977d6.js";
-import { a8 as _export_sfc, M as openBlock, V as createElementBlock, U as createBaseVNode, P as createVNode } from "./index.295f82e9.js";
-import "./render.1283e78e.js";
+import { b as QBtn } from "./QBtn.7c63eac2.js";
+import { a8 as _export_sfc, M as openBlock, V as createElementBlock, U as createBaseVNode, P as createVNode } from "./index.15c200ba.js";
+import "./render.24fd1c1b.js";
 const _sfc_main = {};
 const _hoisted_1 = { class: "fullscreen bg-blue text-white text-center q-pa-md flex flex-center" };
 const _hoisted_2 = /* @__PURE__ */ createBaseVNode("div", { style: { "font-size": "30vh" } }, " 404 ", -1);
