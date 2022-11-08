@@ -1,11 +1,11 @@
-import { b as QItem, Q as QItemSection, a as QItemLabel, c as QList } from "./QItem.f8aeecb2.js";
-import { w as watch, o as onMounted, a as onBeforeUnmount, d as inject, ad as formKey, g as getCurrentInstance, r as ref, c as computed, z as debounce, ae as injectProp, af as onBeforeUpdate, s as stopAndPrevent, b as nextTick, A as onDeactivated, B as onActivated, i as isRuntimeSsrPreHydration, h, t as prevent, J as uid, $ as Transition, G as shouldIgnoreKey, j as client, u as stop, F as isKeyCode, v as position, ag as toRaw, n as noop, ah as fabKey, C as provide, e as emptyRenderFn, f as layoutKey, a7 as defineStore, T as unref, a9 as storeToRefs, K as reactive, M as openBlock, N as createBlock, O as withCtx, P as createVNode, U as createBaseVNode, R as createTextVNode, S as toDisplayString, Q as createCommentVNode, ai as TransitionGroup, _ as normalizeClass, V as createElementBlock, W as renderList, X as Fragment } from "./index.302dcafb.js";
-import { Q as QIcon, h as QSpinner, i as childHasFocus, j as useSize, k as useSizeProps, b as QBtn } from "./QBtn.92cc2f66.js";
-import { b as useDarkProps, e as useDark, u as useModelToggleProps, d as useModelToggleEmits, l as useTick, f as useTimeout, i as useModelToggle, j as getScrollTarget } from "./use-tick.65ee0e0c.js";
-import { h as hSlot, c as createComponent, e as hMergeSlot } from "./render.1627e0f5.js";
-import { h as addFocusFn, i as removeFocusFn, u as useAnchorProps, a as useTransitionProps, v as validatePosition, b as validateOffset, c as useTransition, d as useScrollTarget, e as useAnchor, f as usePortal, r as removeClickOutside, s as setPosition, p as parsePosition, j as closePortalMenus, g as addClickOutside } from "./position-engine.cd22f6c2.js";
-import { Q as QPage } from "./QPage.bf0e4832.js";
-import { u as useBridge } from "./bexBridge.f82d375f.js";
+import { b as QItem, Q as QItemSection, a as QItemLabel, c as QList } from "./QItem.fc3f1eaf.js";
+import { w as watch, o as onMounted, a as onBeforeUnmount, d as inject, ad as formKey, g as getCurrentInstance, r as ref, c as computed, z as debounce, ae as injectProp, af as onBeforeUpdate, s as stopAndPrevent, b as nextTick, A as onDeactivated, B as onActivated, i as isRuntimeSsrPreHydration, h, t as prevent, J as uid, $ as Transition, G as shouldIgnoreKey, j as client, u as stop, F as isKeyCode, v as position, ag as toRaw, n as noop, ah as fabKey, C as provide, e as emptyRenderFn, f as layoutKey, a7 as defineStore, T as unref, a9 as storeToRefs, K as reactive, M as openBlock, N as createBlock, O as withCtx, P as createVNode, U as createBaseVNode, R as createTextVNode, S as toDisplayString, Q as createCommentVNode, ai as TransitionGroup, _ as normalizeClass, V as createElementBlock, W as renderList, X as Fragment } from "./index.6ccf0a55.js";
+import { Q as QIcon, h as QSpinner, i as childHasFocus, j as useSize, k as useSizeProps, b as QBtn } from "./QBtn.a32357cb.js";
+import { b as useDarkProps, e as useDark, u as useModelToggleProps, d as useModelToggleEmits, l as useTick, f as useTimeout, i as useModelToggle, j as getScrollTarget } from "./use-tick.064b13ec.js";
+import { h as hSlot, c as createComponent, e as hMergeSlot } from "./render.4bb9dd79.js";
+import { h as addFocusFn, i as removeFocusFn, u as useAnchorProps, a as useTransitionProps, v as validatePosition, b as validateOffset, c as useTransition, d as useScrollTarget, e as useAnchor, f as usePortal, r as removeClickOutside, s as setPosition, p as parsePosition, j as closePortalMenus, g as addClickOutside } from "./position-engine.2e7cf019.js";
+import { Q as QPage } from "./QPage.3074b423.js";
+import { u as useBridge } from "./bexBridge.8c5b6c16.js";
 function useFormChild({ validate, resetValidation, requiresQForm }) {
   const $form = inject(formKey, false);
   if ($form !== false) {
@@ -2259,6 +2259,7 @@ const useCharacterStore = defineStore(STORE_NAME, () => {
   const currentCharacterKey = ref(null);
   function setCurrentCharacter(key) {
     currentCharacterKey.value = key;
+    persist();
   }
   const currentCharacter = computed(() => characters.value[currentCharacterKey.value]);
   const {

@@ -1,4 +1,4 @@
-import { d as inject, a0 as quasarKey } from "./index.302dcafb.js";
+import { d as inject, a0 as quasarKey } from "./index.6ccf0a55.js";
 const modifiersAll = {
   left: true,
   right: true,
