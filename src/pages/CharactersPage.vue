@@ -174,17 +174,17 @@
         <q-item
           key="show_inactive"
           clickable
-          :inset-level="1"
           @click="showInactiveTalents = !showInactiveTalents"
         >
-          <q-item-section>
-            Inaktive Talente anzeigen?
-          </q-item-section>
           <q-item-section side>
             <q-toggle
               v-model="showInactiveTalents"
               checked-icon="sym_r_check"
+              style="margin: -0.5em -0.2em -0.5em -1em;"
             />
+          </q-item-section>
+          <q-item-section>
+            Inaktive Talente anzeigen?
           </q-item-section>
         </q-item>
       </TransitionGroup>
