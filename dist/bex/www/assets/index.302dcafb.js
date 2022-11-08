@@ -9224,18 +9224,18 @@ const __vitePreload = function preload(baseModule, deps) {
 const routes = [
   {
     path: "/",
-    component: () => __vitePreload(() => import("./MainLayout.31baeb66.js"), true ? ["assets/MainLayout.31baeb66.js","assets/MainLayout.c87a02a5.css","assets/QBtn.7c63eac2.js","assets/render.24fd1c1b.js","assets/QItem.e7b23ba2.js","assets/use-tick.8d5452b3.js","assets/use-quasar.8bdcb097.js","assets/bexBridge.3bf7cb1d.js"] : void 0),
+    component: () => __vitePreload(() => import("./MainLayout.2ebef079.js"), true ? ["assets/MainLayout.2ebef079.js","assets/MainLayout.c87a02a5.css","assets/QBtn.92cc2f66.js","assets/render.1627e0f5.js","assets/QItem.f8aeecb2.js","assets/use-tick.65ee0e0c.js","assets/use-quasar.0433b19e.js","assets/bexBridge.f82d375f.js"] : void 0),
     children: [
-      { path: "", component: () => __vitePreload(() => import("./IndexPage.e48a2735.js"), true ? ["assets/IndexPage.e48a2735.js","assets/QPage.039bc1a9.js","assets/render.24fd1c1b.js"] : void 0) },
-      { path: "rolls", component: () => __vitePreload(() => import("./RollsPage.64ef87f1.js"), true ? ["assets/RollsPage.64ef87f1.js","assets/QBtn.7c63eac2.js","assets/render.24fd1c1b.js","assets/QPage.039bc1a9.js","assets/bexBridge.3bf7cb1d.js"] : void 0) },
-      { path: "calendar", component: () => __vitePreload(() => import("./CalendarPage.b8f16bea.js"), true ? ["assets/CalendarPage.b8f16bea.js","assets/CalendarPage.c1a6e410.css","assets/QBtn.7c63eac2.js","assets/render.24fd1c1b.js","assets/QPage.039bc1a9.js","assets/use-quasar.8bdcb097.js","assets/use-tick.8d5452b3.js","assets/bexBridge.3bf7cb1d.js","assets/position-engine.1e4f67ac.js"] : void 0) },
-      { path: "characters", component: () => __vitePreload(() => import("./CharactersPage.3584f0b1.js"), true ? ["assets/CharactersPage.3584f0b1.js","assets/CharactersPage.48970655.css","assets/QItem.e7b23ba2.js","assets/render.24fd1c1b.js","assets/use-tick.8d5452b3.js","assets/QBtn.7c63eac2.js","assets/position-engine.1e4f67ac.js","assets/QPage.039bc1a9.js","assets/bexBridge.3bf7cb1d.js"] : void 0) },
-      { path: "server", component: () => __vitePreload(() => import("./ServerPage.a27879ff.js"), true ? ["assets/ServerPage.a27879ff.js","assets/QBtn.7c63eac2.js","assets/render.24fd1c1b.js","assets/QPage.039bc1a9.js","assets/bexBridge.3bf7cb1d.js"] : void 0) }
+      { path: "", component: () => __vitePreload(() => import("./IndexPage.86c97773.js"), true ? ["assets/IndexPage.86c97773.js","assets/QPage.bf0e4832.js","assets/render.1627e0f5.js"] : void 0) },
+      { path: "rolls", component: () => __vitePreload(() => import("./RollsPage.da1d9fac.js"), true ? ["assets/RollsPage.da1d9fac.js","assets/QBtn.92cc2f66.js","assets/render.1627e0f5.js","assets/QPage.bf0e4832.js","assets/bexBridge.f82d375f.js"] : void 0) },
+      { path: "calendar", component: () => __vitePreload(() => import("./CalendarPage.4295d4a2.js"), true ? ["assets/CalendarPage.4295d4a2.js","assets/CalendarPage.c1a6e410.css","assets/QBtn.92cc2f66.js","assets/render.1627e0f5.js","assets/QPage.bf0e4832.js","assets/use-quasar.0433b19e.js","assets/use-tick.65ee0e0c.js","assets/bexBridge.f82d375f.js","assets/position-engine.cd22f6c2.js"] : void 0) },
+      { path: "characters", component: () => __vitePreload(() => import("./CharactersPage.0e77cac5.js"), true ? ["assets/CharactersPage.0e77cac5.js","assets/CharactersPage.48970655.css","assets/QItem.f8aeecb2.js","assets/render.1627e0f5.js","assets/use-tick.65ee0e0c.js","assets/QBtn.92cc2f66.js","assets/position-engine.cd22f6c2.js","assets/QPage.bf0e4832.js","assets/bexBridge.f82d375f.js"] : void 0) },
+      { path: "server", component: () => __vitePreload(() => import("./ServerPage.b4ee6ff4.js"), true ? ["assets/ServerPage.b4ee6ff4.js","assets/QBtn.92cc2f66.js","assets/render.1627e0f5.js","assets/QPage.bf0e4832.js","assets/bexBridge.f82d375f.js"] : void 0) }
     ]
   },
   {
     path: "/:catchAll(.*)*",
-    component: () => __vitePreload(() => import("./ErrorNotFound.303d19bc.js"), true ? ["assets/ErrorNotFound.303d19bc.js","assets/QBtn.7c63eac2.js","assets/render.24fd1c1b.js"] : void 0)
+    component: () => __vitePreload(() => import("./ErrorNotFound.98bab15c.js"), true ? ["assets/ErrorNotFound.98bab15c.js","assets/QBtn.92cc2f66.js","assets/render.1627e0f5.js"] : void 0)
   }
 ];
 var createRouter = route(function() {
