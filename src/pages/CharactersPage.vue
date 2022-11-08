@@ -21,6 +21,18 @@
         </q-item-section>
       </q-item>
 
+      <q-item key="search" style="position: sticky; top: 0; z-index: 1;">
+        <q-input
+          v-model="talentSearch"
+          clearable
+          debounce="200"
+          class="full-width bg-glassed"
+          placeholder="Suche"
+          outlined
+          @clear="talentSearch = ''"
+        />
+      </q-item>
+
       <TransitionGroup name="list">
         <q-item
           key="header_attributes"
@@ -144,17 +156,6 @@
               checked-icon="sym_r_check"
             />
           </q-item-section>
-        </q-item>
-        <q-item key="search">
-          <q-input
-            v-model="talentSearch"
-            clearable
-            debounce="200"
-            class="full-width"
-            placeholder="Suche"
-            outlined
-            @clear="talentSearch = ''"
-          />
         </q-item>
       </TransitionGroup>
     </q-list>

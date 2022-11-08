@@ -23,6 +23,11 @@ html, body, #q-app, .q-layout, .q-page-container {
   'opsz' 48
 }
 
+.bg-glassed {
+  backdrop-filter: blur(3px);
+  background: rgba(white, 0.8);
+}
+
 /* For exceptions, put them in a container with this class: */
 .icon-md-filled.material-symbols-rounded,
 .icon-md-filled .material-symbols-rounded {
