@@ -39,7 +39,10 @@ yarn lint
 
 ### Build the app for production
 ```bash
+# SPA mode:
 quasar build
+# or BEX mode:
+quasar build -m bex
 ```
 
 ### Customize the configuration
