@@ -1,7 +1,9 @@
 <template>
   <q-page class="flex column q-gutter-y-md q-pa-md">
-    <h3>Characters</h3>
     <q-list class="relative-position">
+      <q-item class="text-h4 header-item q-mb-md">
+        Charaktere
+      </q-item>
       <input
         ref="nativeFilePicker"
         type="file"

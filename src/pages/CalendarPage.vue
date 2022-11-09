@@ -1,26 +1,27 @@
 <template>
-  <q-page class="flex flex-center q-gutter-y-md q-pa-md">
-    <div class="column">
-      <Calendar />
+  <q-page class="flex column flex-center q-pa-md justify-between">
+    <q-item class="text-h4 header-item" style="border-radius: 0.5em;">
+      Kalender
+    </q-item>
+    <Calendar />
 
-      <div class="row justify-between">
-        <q-btn
-          class="text-weight-regular"
-          icon-right="sym_r_send"
-          label="Teilen"
-          no-caps
-          flat
-          @click="sendToRoll20"
-        />
-        <q-btn
-          class="text-weight-regular icon-md-filled"
-          icon-right="sym_r_event_upcoming"
-          label="weiter"
-          no-caps
-          flat
-          @click="store.increment"
-        />
-      </div>
+    <div class="row full-width justify-around">
+      <q-btn
+        class="text-weight-regular"
+        icon-right="sym_r_send"
+        label="Teilen"
+        no-caps
+        flat
+        @click="sendToRoll20"
+      />
+      <q-btn
+        class="text-weight-regular icon-md-filled"
+        icon-right="sym_r_event_upcoming"
+        label="weiter"
+        no-caps
+        flat
+        @click="store.increment"
+      />
     </div>
   </q-page>
 </template>

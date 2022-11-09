@@ -97,3 +97,21 @@ html, body, #q-app, .q-layout, .q-page-container {
     }
   }
 }
+
+/* Consistent stylig for FABs and Header list items */
+.q-fab>.q-btn,
+.q-btn--fab,
+.header-item {
+  border-radius: 16px;
+  background-color: mix(white, $primary, 90%) !important;
+  color: $primary;
+}
+.q-fab__actions>.q-btn {
+  border-radius: 12px;
+}
+
+.header-item {
+  width: 100%;
+  padding-top: map-get($space-md, "y");
+  padding-bottom: map-get($space-md, "y");
+}
