@@ -51,8 +51,7 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
       if (data && "characters" in data) {
         for (const key in data.characters) {
           if (Object.hasOwnProperty.call(data.characters, key)) {
-            const character = data.characters[key]
-            setCharacter(key, character)
+            characters.value[key] = data.characters[key]
           }
         }
 
