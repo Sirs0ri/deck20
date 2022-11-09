@@ -4,6 +4,8 @@
       <q-item class="text-h4 header-item q-mb-md">
         Charaktere
       </q-item>
+
+      <!-- Hidden file input for import -->
       <input
         ref="nativeFilePicker"
         type="file"
@@ -12,6 +14,7 @@
         @input="evt => parseImportedFile(evt.target.files[0])"
       >
 
+      <!-- Name / Class -->
       <q-item v-if="currentCharacter">
         <q-item-section>
           <q-item-label>
@@ -23,7 +26,7 @@
         </q-item-section>
       </q-item>
 
-      <q-item key="search" style="position: sticky; top: 0; z-index: 1;">
+      <!-- Search -->
         <q-input
           v-model="talentSearch"
           clearable
@@ -259,14 +262,13 @@ import {
   talentGroups,
 } from "src/utils/characterSheet"
 
-// ========== CHARACTER ==========
-
 const store = useCharacterStore()
 const { currentCharacter, characters } = storeToRefs(store)
 
 store.restored.then(success => {
   // Note: if anything needs to be done after restoring the store, do it here
 })
+// #region ========== UI ==========
 
 const characterLoaded = computed(() => currentCharacter.value != null)
 
@@ -309,7 +311,9 @@ function getItems (groupName) {
   return Object.values(result)
 }
 
-// ========== HELPERS ==========
+// #endregion
+
+// #region ========== HELPERS ==========
 const favoriteTalents = reactive([])
 
 /** @param {String} talent */
@@ -324,7 +328,9 @@ function toggleFav (talent) {
   else favoriteTalents.push(talent)
 }
 
-// ========== FILE IMPORT ==========
+// #endregion
+
+// #region ========== FILE IMPORT ==========
 
 const fab = ref(null)
 function handleFabClick (evt) {
@@ -354,8 +360,9 @@ async function parseImportedFile (newFile) {
 
   store.setCharacter(character.generalData.key, character)
 }
+// #endregion
 
-// ========== ROLL20 ==========
+// #region ========== ROLL20 ==========
 
 function roll (props) {
   const {
@@ -370,6 +377,7 @@ function roll (props) {
   }
   console.log("Rolling", name, "vs", value)
 }
+// #endregion
 </script>
 
 <style lang="scss">

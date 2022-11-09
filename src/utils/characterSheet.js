@@ -386,7 +386,6 @@ export function parseTalents (xmlDocument) {
       extraRolls: {},
     }
 
-    specializations.length && console.log(name, "has a specialization:", specializations)
     for (const spec of specializations) {
       result[name].extraRolls[spec] = value + 2
     }

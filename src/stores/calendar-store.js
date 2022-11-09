@@ -24,7 +24,7 @@ export const useCalendarStore = defineStore("calendar", () => {
     if (isBex) {
       // Restore state via BEX bridge
       const { data } = await bexSend("restore-store", "calendar")
-      if ("today" in data) today.value = data.today
+      if (data && "today" in data) today.value = data.today
       return true
     } else {
       // TODO: this is not a BEX, store will have to be restored some other way

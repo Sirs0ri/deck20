@@ -122,13 +122,18 @@ onBeforeUnmount(() => {
 
 const essentialLinks = computed(() => {
   const l = []
-  l.push({
-    title: "Übersicht",
-    caption: "quasar.dev",
-    icon: "sym_r_home",
-    link: "/",
-    class: "",
-  })
+  // Only during DEV mode, or PROD with active --debugging flag.
+  // Otherwise code will be stripped out at compile-time.
+  // See https://quasar.dev/quasar-cli-vite/handling-process-env
+  if (process.env.DEBUGGING) {
+    l.push({
+      title: "Übersicht",
+      caption: "quasar.dev",
+      icon: "sym_r_home",
+      link: "/",
+      class: "",
+    })
+  }
   l.push({
     title: "Würfe",
     icon: "sym_r_casino",
@@ -147,6 +152,7 @@ const essentialLinks = computed(() => {
     link: "/characters",
     class: "",
   })
+  // Only for Browser Extensions
   isBex && l.push({
     title: "Server",
     icon: "sym_r_terminal",
