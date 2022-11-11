@@ -103,7 +103,7 @@ html, body, #q-app, .q-layout, .q-page-container {
 .q-btn--fab,
 .header-item {
   border-radius: 16px;
-  background-color: mix(white, $primary, 90%) !important;
+  background-color: rgba($primary, 0.1) !important;
   color: $primary;
 }
 .q-fab__actions>.q-btn {
