@@ -1,46 +1,5 @@
 <template>
   <q-layout view="lHh Lpr lFf" style="min-width: 360px; min-height: 600px">
-    <q-header v-if="$q.screen.gt.xs" elevated>
-      <q-toolbar>
-        <q-btn
-          flat
-          dense
-          round
-          icon="sym_r_menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-        />
-
-        <q-toolbar-title>
-          Quasar App
-        </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
-      </q-toolbar>
-    </q-header>
-
-    <q-drawer
-      v-if="$q.screen.gt.xs"
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-    >
-      <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
-        </q-item-label>
-
-        <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
-          :class="link.class"
-        />
-      </q-list>
-    </q-drawer>
-
     <q-page-container>
       <div class="page-wrapper">
         <q-scroll-area class="absolute fit">
@@ -50,10 +9,10 @@
     </q-page-container>
 
     <q-footer
-      v-if="!$q.screen.gt.xs"
       elevated
       class="bg-primary text-white"
     >
+      <!-- v-if="$q.screen.gt.xs" -->
       <q-tabs
         class="text-white"
         no-caps
@@ -71,20 +30,38 @@
         />
       </q-tabs>
     </q-footer>
+
+    <!-- <div
+      v-if="!$q.screen.gt.xs"
+      class="nav-handle"
+    >
+      <q-tabs
+        class="text-white"
+        no-caps
+        narrow-indicator
+        switch-indicator
+      >
+        <q-route-tab
+          v-for="link in essentialLinks"
+          :key="link.title"
+          :icon="link.icon"
+          :to="link.link"
+          :class="link.class"
+          :alert="link.alert ?? false"
+          exact
+        />
+      </q-tabs>
+    </div> -->
   </q-layout>
 </template>
 
 <script setup>
 import { ref, onBeforeUnmount, computed } from "vue"
 import { useQuasar } from "quasar"
-import EssentialLink from "components/EssentialLink.vue"
 
 import { isBex, useBridge } from "src/utils/bexBridge"
 
-// eslint-disable-next-line no-unused-vars
 const $q = useQuasar()
-
-const leftDrawerOpen = ref(false)
 
 const {
   bexSend,
@@ -162,10 +139,6 @@ const essentialLinks = computed(() => {
   })
   return l
 })
-
-function toggleLeftDrawer () {
-  leftDrawerOpen.value = !leftDrawerOpen.value
-}
 </script>
 
 <style lang="scss">
@@ -188,4 +161,70 @@ function toggleLeftDrawer () {
     opacity: 0.3;
   }
 }
+
+/*
+.nav-handle {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+
+  width: 200px;
+
+  height: 18px;
+
+  transform: translateX(-50%);
+
+  border-radius: 6px 6px 0 0;
+
+  background: $primary;
+
+  transition: width 200ms, height 200ms;
+
+  display: flex;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    pointer-events: none;
+
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6px;
+    margin-left: auto;
+    margin-right: auto;
+
+    background: rgba(white, 0.2);
+    width: 56px;
+    height: 6px;
+
+    border-radius: 8px;
+
+    transition: opacity 200ms;
+
+  }
+
+  .q-tabs{
+    opacity: 0;
+    transform: scale(0);
+    min-width: 360px;
+    margin: 0 6px;
+    transition: transform 200ms;
+  }
+
+  &:hover {
+    height: 56px;
+    width: 372px;
+
+    &::before {
+      opacity: 0;
+    }
+
+    .q-tabs{
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+*/
 </style>
