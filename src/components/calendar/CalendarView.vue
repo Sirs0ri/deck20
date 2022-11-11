@@ -21,7 +21,7 @@
       :style="icon === seasonIcon ? '' : 'scale: 0.9; opacity: 0'"
     />
 
-    <div v-if="stateReady" class="header">
+    <div v-if="store.restored" class="header">
       <q-carousel
         ref="carousel"
         v-model="slide"
@@ -96,7 +96,7 @@
     </div>
 
     <div
-      v-if="stateReady"
+      v-if="store.restored"
       class="footer grid-button"
       @click="showToday"
     >
@@ -126,9 +126,10 @@ import DayCell from "./CalendarDayItem.vue"
 const store = useCalendarStore()
 const { today } = storeToRefs(store)
 
+store.restoration.then(() => showToday())
+
 // ========== UI TOOLS ==========
-const stateReady = ref(false)
-const currentView = ref({ ...store.today, day: 1 })
+const currentView = ref({ ...today.value, day: 1 })
 
 const slide = ref("bf")
 const carousel = ref(null)
@@ -140,7 +141,7 @@ function carouselPrev () {
 }
 
 const currentViewDays = computed(() => {
-  if (!stateReady.value) return []
+  if (!store.restored) return []
 
   const view = unref(currentView)
 
@@ -214,7 +215,7 @@ const seasonIcons = [
 
 /** Get an icon for the meterological (not astronomical) season. */
 const seasonIcon = computed(() => {
-  if (!stateReady.value) return ""
+  if (!store.restored) return ""
   switch (currentView.value.month) {
     case 3: // sep
     case 4: // okt
@@ -301,11 +302,6 @@ function handleDayClick (day, clickEvt) {
     currentView.value = { ...day.bind.date, day: 1 }
   }
 }
-
-store.restored.then(success => {
-  showToday()
-  stateReady.value = true
-})
 
 </script>
 

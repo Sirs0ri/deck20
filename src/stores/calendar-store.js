@@ -5,48 +5,45 @@ import { addDays, dateEquals } from "src/utils/calendar"
 
 import { isBex, useBridge } from "src/utils/bexBridge"
 
-export const useCalendarStore = defineStore("calendar", () => {
-  const initialDate = { day: 0, month: 0, year: 0 }
-  const today = ref({ ...initialDate })
+const STORE_NAME = "calendar"
 
+export const useCalendarStore = defineStore(STORE_NAME, () => {
+  // #region ========== STATE ==========
+
+  const initialDate = { day: 0, month: 0, year: 0 }
+
+  const today = ref({ ...initialDate })
   watch(today, (newVal, oldVal) => {
     if (dateEquals(oldVal, initialDate)) return
     if (dateEquals(oldVal, newVal)) return
-    persist()
+    persistDebounced()
   })
-
-  const {
-    bexSend,
-  } = useBridge()
-
-  // Todo: handle store init without anything to restore
-  async function restore () {
-    if (isBex) {
-      // Restore state via BEX bridge
-      const { data } = await bexSend("restore-store", "calendar")
-      if (data && "today" in data) today.value = data.today
-      else today.value = { day: 10, month: 5, year: 1025 }
-      return true
-    } else {
-      // TODO: this is not a BEX, store will have to be restored some other way
-      today.value = { day: 1, month: 5, year: 1019 }
-      return true
-    }
-  }
-
-  const restored = restore()
 
   function increment () {
     today.value = addDays(today.value, 1)
+  }
 
-    persist()
+  // #endregion
+
+  // #region ========== PERSISTENCE ==========
+  const restored = ref(false)
+  const restoration = ref(null)
+
+  const { bexSend } = useBridge()
+
+  let timeout = null
+  function persistDebounced () {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(persist, 750)
   }
 
   function persist () {
+    if (!restored.value) return
+
     if (isBex) {
       // Persist state via BEX bridge
       bexSend("persist-store", {
-        key: "calendar",
+        key: STORE_NAME,
         value: {
           today: today.value,
         },
@@ -56,10 +53,30 @@ export const useCalendarStore = defineStore("calendar", () => {
     }
   }
 
+  async function restore () {
+    if (isBex) {
+      // Restore state via BEX bridge
+      const { data } = await bexSend("restore-store", STORE_NAME)
+      if (data && "today" in data) today.value = data.today
+      else today.value = { day: 10, month: 5, year: 1025 }
+
+      return true
+    }
+    // TODO: this is not a BEX, store will have to be restored some other way
+    today.value = { day: 1, month: 5, year: 1019 }
+    return true
+  }
+
+  restoration.value = restore().then((success) => {
+    restored.value = success
+  })
+
+  // #endregion
+
   return {
     today,
     increment,
     restored,
-    // persist,
+    restoration,
   }
 })
