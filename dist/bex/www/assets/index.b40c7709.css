@@ -39257,6 +39257,21 @@ body.body--dark {
 .q-btn--fab,
 .header-item {
   border-radius: 16px;
+  color: #1976D2;
+}
+
+.q-fab > .q-btn,
+.q-btn--fab {
+  background-color: white;
+}
+
+.q-fab > .q-btn::before,
+.q-btn--fab::before {
+  background-color: rgba(25, 118, 210, 0.1) !important;
+}
+
+.header-item {
+  border-radius: 16px;
   background-color: rgba(25, 118, 210, 0.1) !important;
   color: #1976D2;
 }
