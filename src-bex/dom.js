@@ -86,4 +86,22 @@ export default bexDom(async (bridge) => {
   //   })
   // }
   // const rolls = await processRoll("2d20")
+
+  // const options = [
+  //   "Empathie (MU/IN/IN): 8",
+  //   "Geister aufnehmen (MU/IN/KO): 10",
+  //   "Geister bannen (MU/CH/KK): 10",
+  //   "Geister binden (KL/IN/CH): 12",
+  //   "Geister rufen (MU/IN/CH): 12",
+  // ].map(e => ({ value: e, lower: e.toLowerCase() }))
+  // const ogResponder = window.d20.textchat.$textarea.autocomplete("option", "source")
+  // function newResponder (request, respond) {
+  //   console.log("getting data for", request)
+  //   if (request.term.startsWith("!")) {
+  //     const query = request.term.substring(1).toLowerCase()
+  //     respond(options.filter(o => query === "" || o.lower.includes(query)))
+  //   } else ogResponder(request, respond)
+  // }
+  // window.d20.textchat.$textarea.autocomplete("option", "source", newResponder)
+  // window.d20.textchat.$textarea.autocomplete("option", "position", { my: "left bottom", at: "left top" })
 })
