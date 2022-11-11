@@ -354,19 +354,6 @@ function handleDayClick (day, clickEvt) {
     }
   }
 
-  .header {
-    grid-row: hdr;
-    grid-column: hdr / span 5;
-    padding: 0.5em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .footer {
-    grid-area: ftr;
-    padding: 0.5em;
-  }
-
   .grid-button {
     display: flex;
     justify-content: center;
@@ -390,6 +377,22 @@ function handleDayClick (day, clickEvt) {
     &:hover {
       background-color: rgba($primary, 0.1);
     }
+  }
+
+  .header {
+    grid-row: hdr;
+    grid-column: hdr / span 5;
+    padding: 0.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .days-background{
+    grid-area: days;
+  }
+  .footer {
+    grid-area: ftr;
+    padding: 0.5em;
   }
 }
 
