@@ -103,6 +103,19 @@ html, body, #q-app, .q-layout, .q-page-container {
 .q-btn--fab,
 .header-item {
   border-radius: 16px;
+  color: $primary;
+}
+
+.q-fab>.q-btn,
+.q-btn--fab {
+  background-color: white;
+
+  &::before {
+    background-color: rgba($primary, 0.1) !important;
+  }
+}
+.header-item {
+  border-radius: 16px;
   background-color: rgba($primary, 0.1) !important;
   color: $primary;
 }
