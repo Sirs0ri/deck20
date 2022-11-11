@@ -5,26 +5,52 @@
         Charaktere
       </q-item>
 
-      <!-- Hidden file input for import -->
-      <input
-        ref="nativeFilePicker"
-        type="file"
-        accept=".xml"
-        style="display: none;"
-        @input="evt => parseImportedFile(evt.target.files[0])"
-      >
-
       <!-- Name / Class -->
-      <q-item v-if="currentCharacter">
-        <q-item-section>
-          <q-item-label>
-            {{ currentCharacter.generalData.name }}
-          </q-item-label>
-          <q-item-label caption>
-            {{ currentCharacter.generalData.profession }}
-          </q-item-label>
-        </q-item-section>
-      </q-item>
+      <template v-if="currentCharacter">
+        <q-item>
+          <q-item-section v-if="editingCharacter">
+            <q-input
+              v-model="currentCharacter.generalData.name"
+              debounce="200"
+              autofocus
+              placeholder="Suche"
+              outlined
+              class="full-width bg-glassed"
+              clearable
+              clear-icon="sym_r_undo"
+              @clear="currentCharacter.generalData.name = characterNameBackup"
+              @keyup.enter.ctrl="toggleEditCharacter"
+            />
+          </q-item-section>
+          <q-item-section v-else style="min-height: 56px">
+            <q-item-label>
+              {{ currentCharacter.generalData.name }}
+            </q-item-label>
+            <q-item-label caption>
+              {{ currentCharacter.generalData.profession }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <Transition name="fadeScale">
+              <q-btn
+                v-if="editingCharacter"
+                icon="sym_r_task_alt"
+                color="primary"
+                round
+                flat
+                @click="toggleEditCharacter"
+              />
+              <q-btn
+                v-else
+                icon="sym_r_edit"
+                round
+                flat
+                @click="toggleEditCharacter"
+              />
+            </Transition>
+          </q-item-section>
+        </q-item>
+      </template>
 
       <!-- Search -->
       <q-item key="search" class="sticky-search">
@@ -100,6 +126,7 @@
         tag="div"
       >
         <q-item
+          :key="`header_${group.name}`"
           clickable
           class="rounded-borders bg-white sticky-heading"
           :style="{top: stickyHeadingTop}"
@@ -251,6 +278,15 @@
           @click="pickCharacterFile"
         />
       </q-fab>
+
+      <!-- Hidden file input for import -->
+      <input
+        ref="nativeFilePicker"
+        type="file"
+        accept=".xml"
+        style="display: none;"
+        @input="evt => parseImportedFile(evt.target.files[0])"
+      >
     </div>
   </q-page>
 </template>
@@ -270,10 +306,16 @@ import {
 const store = useCharacterStore()
 const { currentCharacter, characters } = storeToRefs(store)
 
-store.restored.then(success => {
-  // Note: if anything needs to be done after restoring the store, do it here
-})
 // #region ========== UI ==========
+
+const editingCharacter = ref(false)
+const characterNameBackup = ref("")
+function toggleEditCharacter () {
+  if (!editingCharacter.value) {
+    characterNameBackup.value = currentCharacter.value.generalData.name
+  }
+  editingCharacter.value = !editingCharacter.value
+}
 
 const characterLoaded = computed(() => currentCharacter.value != null)
 
@@ -458,4 +500,5 @@ function roll (props) {
   /* Negative margin should be approx. as big as the element is high */
   margin-top: -37px;
 }
+
 </style>

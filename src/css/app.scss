@@ -115,3 +115,19 @@ html, body, #q-app, .q-layout, .q-page-container {
   padding-top: map-get($space-md, "y");
   padding-bottom: map-get($space-md, "y");
 }
+
+/* Animations, use them with <Transition> elements, usign the name attribute */
+
+.fadeScale-enter-active,
+.fadeScale-leave-active {
+  transition: scale 200ms, opacity 170ms;
+}
+.fadeScale-leave-active {
+  position: absolute;
+}
+
+.fadeScale-enter-from,
+.fadeScale-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}

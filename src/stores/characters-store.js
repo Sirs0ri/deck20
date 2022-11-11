@@ -1,4 +1,4 @@
-import { computed, ref, unref } from "vue"
+import { computed, ref, unref, watch, reactive } from "vue"
 import { defineStore } from "pinia"
 
 import { isBex, useBridge } from "src/utils/bexBridge"
@@ -7,13 +7,14 @@ const STORE_NAME = "characters"
 
 export const useCharacterStore = defineStore(STORE_NAME, () => {
   // ========== STATE ==========
+  const characters = reactive({})
 
-  const characters = ref({})
   function setCharacter (key, data) {
-    characters.value[key] = data
+    characters[key] = data
     currentCharacterKey.value = key
-    persist()
   }
+
+  watch(characters, () => persistDebounced())
 
   const currentCharacterKey = ref(null)
 
@@ -22,14 +23,23 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
     persist()
   }
 
-  const currentCharacter = computed(() => characters.value[currentCharacterKey.value])
+  const currentCharacter = computed(() => characters[currentCharacterKey.value])
 
-  // ========== PERSISTENCE ==========
-  const {
-    bexSend,
-  } = useBridge()
+  // #region ========== PERSISTENCE ==========
+  const restored = ref(false)
+  const restoration = ref(null)
+
+  const { bexSend } = useBridge()
+
+  let timeout = null
+  function persistDebounced () {
+    if (timeout) clearTimeout(timeout)
+    timeout = setTimeout(persist, 750)
+  }
 
   function persist () {
+    if (!restored.value) return
+
     if (isBex) {
       // Persist state via BEX bridge
       bexSend("persist-store", {
@@ -51,23 +61,30 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
       if (data && "characters" in data) {
         for (const key in data.characters) {
           if (Object.hasOwnProperty.call(data.characters, key)) {
-            characters.value[key] = data.characters[key]
+            characters[key] = data.characters[key]
           }
         }
 
         if ("currentCharacterKey" in data) currentCharacterKey.value = data.currentCharacterKey
         return true
       } else {
-      // TODO: this is not a BEX, store will have to be restored some other way
+        // No data was restored, but the connection succeeded. This is considered a success.
         return true
       }
     }
+    // TODO: this is not a BEX, store will have to be restored some other way
+    return true
   }
 
-  const restored = restore()
+  restoration.value = restore().then((success) => {
+    restored.value = success
+  })
+
+  // #endregion
 
   return {
     restored,
+    restoration,
     characters,
     currentCharacter,
     currentCharacterKey,
