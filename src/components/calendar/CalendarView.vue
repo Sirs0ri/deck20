@@ -1,5 +1,9 @@
 <template>
-  <div class="calendar">
+  <div
+    class="calendar"
+    @wheel="onWheel"
+    @click.middle="showToday()"
+  >
     <q-icon
       v-for="icon in seasonIcons"
       :key="`si_${icon}`"
@@ -70,6 +74,8 @@
         name="sym_r_navigate_next"
       />
     </div>
+
+    <div class="days-background" />
 
     <div style="display: contents;">
       <DayBackground
@@ -234,6 +240,20 @@ const seasonIcon = computed(() => {
 })
 
 // ========== NAVIGATION ==========
+
+function onWheel (evt) {
+  const targetClassList = evt.target.classList
+  if (!targetClassList.contains("date-cell") && !targetClassList.contains("days-background")) return
+
+  const { deltaY, deltaX } = evt
+
+  if (deltaY > 0) showNextMonth()
+  else if (deltaY < 0) showPreviousMonth()
+
+  if (deltaX > 0) showNextYear()
+  else if (deltaX < 0) showPreviousYear()
+}
+
 function showNextMonth () {
   if (currentView.value.month === months.length) {
     currentView.value.month = 1
@@ -249,6 +269,12 @@ function showPreviousMonth () {
   } else {
     currentView.value.month--
   }
+}
+function showNextYear () {
+  currentView.value.year++
+}
+function showPreviousYear () {
+  currentView.value.year--
 }
 function showToday () {
   currentView.value = { ...today.value, day: 1 }
