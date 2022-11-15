@@ -33,7 +33,7 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
     log("starting server...")
 
-    port = chrome.runtime.connectNative("de.sirs0ri.roll20deck")
+    port = chrome.runtime.connectNative("de.sirs0ri.deck20")
 
     // Forward messages received from the server to the bridge
     port.onMessage.addListener((data) => {

@@ -1,3 +1,3 @@
 @echo off
 
-node "D:\Code\Privat\roll20-deck\src-native-bridge\bridge.js"
+node "D:\Code\Privat\deck20\src-native-bridge\bridge.js"
