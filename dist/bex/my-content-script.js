@@ -628,17 +628,81 @@
 
   // src-bex/my-content-script.js
   var import_wrappers = __toESM(require_wrappers());
-  var log = (...args) => console.log("[bex] content", ...args);
+  var log = (...args) => {
+    if (false) {
+      console.log("[bex] content:", ...args);
+    }
+  };
+  var iFrame = document.createElement("iframe");
+  var defaultFrameHeight = "32px";
+  var setIFrameHeight = (height) => {
+    iFrame.height = height;
+  };
+  var resetIFrameHeight = () => {
+    setIFrameHeight(defaultFrameHeight);
+  };
+  iFrame.id = "bex-app-iframe";
+  iFrame.width = "32px";
+  resetIFrameHeight();
+  Object.assign(iFrame.style, {
+    position: "fixed",
+    right: "8px",
+    bottom: "16px",
+    border: "0",
+    zIndex: "9999999",
+    overflow: "visible",
+    pointerEvents: "none"
+  });
+  (function() {
+    iFrame.src = chrome.runtime.getURL("www/index.html#/iframe");
+    document.body.prepend(iFrame);
+  })();
   var my_content_script_default = (0, import_wrappers.bexContent)((bridge2) => {
     log("active", Date.now());
     bridge2.send("tab-connected");
     addEventListener("pagehide", (event) => {
       bridge2.send("tab-disconnected");
     });
-    bridge2.on("native-comm", ({ data, respond }) => {
-      log("got forwarded-ui-action, pinging dom");
-      bridge2.send("forwarded-comm", data);
-      respond();
+    const PREV_BRIDGE_STEPS = ["ui", "background"];
+    const PREV_BRIDGE_STEP = "background";
+    const CURRENT_BRIDGE_STEP = "content";
+    const NEXT_BRIDGE_STEP = "dom";
+    const NEXT_BRIDGE_STEPS = ["dom"];
+    bridge2.on("bridge-forward", ({ data }) => {
+      var _a;
+      if (!((_a = data == null ? void 0 : data.data) == null ? void 0 : _a._pathing))
+        return;
+      const { src, dst, lastFwd, uuid } = data.data._pathing;
+      if (lastFwd === CURRENT_BRIDGE_STEP)
+        return;
+      if (dst === CURRENT_BRIDGE_STEP || dst === NEXT_BRIDGE_STEP) {
+        log("executing", data);
+        if (data.command.startsWith("bridge-response.")) {
+          bridge2.send(data.command, data.data);
+          return;
+        }
+        bridge2.send(data.command, data.data).then((response) => {
+          const responseMsg = {
+            command: `bridge-response.${uuid}`,
+            data: response,
+            pathing: {
+              uuid,
+              src: CURRENT_BRIDGE_STEP,
+              dst: src,
+              lastFwd: CURRENT_BRIDGE_STEP
+            }
+          };
+          log("returning response", responseMsg);
+          bridge2.send("bridge-forward", responseMsg);
+        });
+        return;
+      }
+      log("got request to forward a message:", data);
+      if (lastFwd === PREV_BRIDGE_STEP && NEXT_BRIDGE_STEPS.includes(dst) || lastFwd === NEXT_BRIDGE_STEP && PREV_BRIDGE_STEPS.includes(dst)) {
+        data.data._pathing.lastFwd = CURRENT_BRIDGE_STEP;
+        log("forwarding", data);
+        bridge2.send("bridge-forward", data);
+      }
     });
   });
 

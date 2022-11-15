@@ -611,23 +611,35 @@
 
   // src-bex/background.js
   var import_wrappers = __toESM(require_wrappers());
-  var log = (...args) => console.log("[bex] background", ...args);
+  var log = (...args) => {
+    if (false) {
+      console.log("[bex] background:", ...args);
+    }
+  };
   var serverActive = false;
   var port;
   var connectedTabs = 0;
   var background_default = (0, import_wrappers.bexBackground)((bridge) => {
     log("active", Date.now(), { serverActive });
-    function sendMessageToRoll20Dom(msg) {
-      bridge.send("native-comm", msg);
+    function sendMessageToRoll20Dom({ command, data }) {
+      bridge.send("bridge-forward", {
+        command,
+        data,
+        pathing: {
+          src: "background",
+          dst: "dom",
+          lastFwd: "background"
+        }
+      });
     }
     function startServer() {
       if (serverActive)
         return "Server already running";
       log("starting server...");
-      port = chrome.runtime.connectNative("de.sirs0ri.roll20deck");
+      port = chrome.runtime.connectNative("de.sirs0ri.deck20");
       port.onMessage.addListener((data) => {
         log("Received", data);
-        sendMessageToRoll20Dom({ ...data, _origin: "native" });
+        sendMessageToRoll20Dom(data);
       });
       port.onDisconnect.addListener(() => {
         log("Disconnected");
@@ -664,11 +676,6 @@
       log("server is now", serverActive ? "running" : "stopped");
     }
     updateServerState(serverActive);
-    bridge.on("ui-called-action", ({ data, respond }) => {
-      log("forwarding UI action", data);
-      sendMessageToRoll20Dom({ ...data, _origin: "bex" });
-      respond();
-    });
     bridge.on("query-server-status", (evt) => {
       evt.respond(serverActive);
     });
@@ -696,14 +703,56 @@
       }
       evt.respond();
     });
+    const PREV_BRIDGE_STEPS = ["ui"];
+    const PREV_BRIDGE_STEP = "ui";
+    const CURRENT_BRIDGE_STEP = "background";
+    const NEXT_BRIDGE_STEP = "content";
+    const NEXT_BRIDGE_STEPS = ["content", "dom"];
+    bridge.on("bridge-forward", ({ data }) => {
+      if (!data.data._pathing)
+        return;
+      const { src, dst, lastFwd, uuid } = data.data._pathing;
+      if (lastFwd === CURRENT_BRIDGE_STEP)
+        return;
+      if (dst === CURRENT_BRIDGE_STEP || dst === PREV_BRIDGE_STEP) {
+        log("executing", data);
+        if (data.command.startsWith("bridge-response.")) {
+          bridge.send(data.command, data.data);
+          return;
+        }
+        bridge.send(data.command, data.data).then((response) => {
+          const responseMsg = {
+            command: `bridge-response.${uuid}`,
+            data: response,
+            pathing: {
+              uuid,
+              src: CURRENT_BRIDGE_STEP,
+              dst: src,
+              lastFwd: CURRENT_BRIDGE_STEP
+            }
+          };
+          log("returning response", responseMsg);
+          bridge.send("bridge-forward", responseMsg);
+        });
+        return;
+      }
+      log("got request to forward a message:", data);
+      if (lastFwd === PREV_BRIDGE_STEP && NEXT_BRIDGE_STEPS.includes(dst) || lastFwd === NEXT_BRIDGE_STEP && PREV_BRIDGE_STEPS.includes(dst)) {
+        data.data._pathing.lastFwd = CURRENT_BRIDGE_STEP;
+        log("forwarding", data);
+        bridge.send("bridge-forward", data);
+      }
+    });
     bridge.on("restore-store", ({ data, respond }) => {
       chrome.storage.local.get([data], (items) => {
         respond(items[data]);
       });
     });
     bridge.on("persist-store", ({ data, respond }) => {
-      chrome.storage.local.set({ [data.key]: data.value }, () => {
+      const { key, uid, value } = data;
+      chrome.storage.local.set({ [key]: value }, () => {
         respond(true);
+        bridge.send("store-persisted", { key, uid });
       });
     });
   });
