@@ -18,7 +18,7 @@ const bexConnected = computed(() => { return bridge.value != null })
  */
 async function bexSend (command, data) {
   if (!bridge.value) return { data: null, respond: () => {} }
-  return await bridge.value.send(command, data)
+  return bridge.value.send(command, data)
 }
 /**
  * Register a command handler via BE

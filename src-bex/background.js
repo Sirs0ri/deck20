@@ -21,13 +21,19 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
   log("active", Date.now(), { serverActive })
 
-  // TODO: Use different handler for this?
-  // TODO: REspond with error if no roll20 tab is connected?
-  function sendMessageToRoll20Dom (msg) {
-    bridge.send("native-comm", msg)
+  function sendMessageToRoll20Dom ({ command, data }) {
+    bridge.send("bridge-forward", {
+      command,
+      data,
+      pathing: {
+        src: "background",
+        dst: "dom",
+        lastFwd: "background",
+      },
+    })
   }
 
-  // ========== Native Communication ==========
+  // #region ========== Native Communication ==========
   // This uses the "nativeCommunication" feature to start/stop the server
   // located in src-native-bridge (which is a very basic node.js server).
   // When opening a "port" to the native app, Chrome starts the node app,
@@ -44,7 +50,7 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     // Forward messages received from the server to the bridge
     port.onMessage.addListener((data) => {
       log("Received", data)
-      sendMessageToRoll20Dom({ ...data, _origin: "native" })
+      sendMessageToRoll20Dom(data)
     })
 
     port.onDisconnect.addListener(() => {
@@ -90,7 +96,9 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     log("server is now", serverActive ? "running" : "stopped")
   }
 
-  // ========== BEX Bridge ==========
+  // #endregion
+
+  // #region ========== BEX Bridge ==========
   // This bridge allows communications between different parts of the BEX:
   // This background script runs in the background as soon as a part of the
   // extension is active, and it connects the UI in src/ and any content scripts
@@ -99,12 +107,6 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   // content script.
 
   updateServerState(serverActive)
-
-  bridge.on("ui-called-action", ({ data, respond }) => {
-    log("forwarding UI action", data)
-    sendMessageToRoll20Dom({ ...data, _origin: "bex" })
-    respond()
-  })
 
   bridge.on("query-server-status", evt => {
     evt.respond(serverActive)
@@ -136,7 +138,63 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     evt.respond()
   })
 
-  // ========== STATE PERSISTENCE ==========
+  // Forward messages from the UI to the dom, via the content script
+  // ui -> background -> content -> dom
+  const PREV_BRIDGE_STEPS = ["ui"]
+  const PREV_BRIDGE_STEP = "ui"
+  const CURRENT_BRIDGE_STEP = "background"
+  const NEXT_BRIDGE_STEP = "content"
+  const NEXT_BRIDGE_STEPS = ["content", "dom"]
+
+  bridge.on("bridge-forward", ({ data }) => {
+    // break, if a forwarded message has no pathing info
+    if (!data.data._pathing) return
+
+    const { src, dst, lastFwd, uuid } = data.data._pathing
+    // break if we sent this message
+    if (lastFwd === CURRENT_BRIDGE_STEP) return
+
+    if (dst === CURRENT_BRIDGE_STEP || dst === PREV_BRIDGE_STEP) {
+      log("executing", data)
+
+      if (data.command.startsWith("bridge-response.")) {
+        // forward the response, without caring about any response it might get.
+        bridge.send(data.command, data.data)
+        return
+      }
+      // do command, handle response
+      bridge.send(data.command, data.data)
+        .then(response => {
+          const responseMsg = {
+            command: `bridge-response.${uuid}`,
+            data: response,
+            pathing: {
+              uuid,
+              src: CURRENT_BRIDGE_STEP,
+              dst: src,
+              lastFwd: CURRENT_BRIDGE_STEP,
+            },
+          }
+          log("returning response", responseMsg)
+          bridge.send("bridge-forward", responseMsg)
+        })
+      return
+    }
+
+    log("got request to forward a message:", data)
+    if ( // This came from a previous hop and goes to the next
+      (lastFwd === PREV_BRIDGE_STEP && NEXT_BRIDGE_STEPS.includes(dst)) ||
+      (lastFwd === NEXT_BRIDGE_STEP && PREV_BRIDGE_STEPS.includes(dst))) {
+      data.data._pathing.lastFwd = CURRENT_BRIDGE_STEP
+      log("forwarding", data)
+
+      bridge.send("bridge-forward", data)
+    }
+  })
+
+  // #endregion
+
+  // #region ========== STATE PERSISTENCE ==========
   bridge.on("restore-store", ({ data, respond }) => {
     // TODO: Get state from somewhere
     chrome.storage.local.get([data], items => {
@@ -183,4 +241,5 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   //     respond()
   //   })
   // })
+  // #endregion
 })

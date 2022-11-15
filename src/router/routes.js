@@ -10,6 +10,7 @@ const routes = [
       { path: "server", component: () => import("pages/ServerPage.vue") },
     ],
   },
+  { path: "/iframe", component: () => import("pages/BexBridgeIframe.vue") },
 
   // Always leave this as last one,
   // but you can also remove it
