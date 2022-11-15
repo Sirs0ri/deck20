@@ -1,6 +1,12 @@
 import { bexBackground } from "quasar/wrappers"
 
-const log = (...args) => console.log("[bex] background", ...args)
+/** Wrapper for console.log that adds a "[bex] background" prefix infront of the logged message
+ *
+ * @param  {...any} args
+ */
+const log = (...args) => {
+  if (process.env.DEBUGGING) { console.log("[bex] background:", ...args) }
+}
 
 // This shares state, theres only ever one background.js
 let serverActive = false

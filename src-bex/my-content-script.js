@@ -3,7 +3,13 @@
 
 import { bexContent } from "quasar/wrappers"
 
-const log = (...args) => console.log("[bex] content", ...args)
+/** Wrapper for console.log that adds a "[bex] content" prefix infront of the logged message
+ *
+ * @param  {...any} args
+ */
+const log = (...args) => {
+  if (process.env.DEBUGGING) { console.log("[bex] content:", ...args) }
+}
 
 // TODO: Run this only once, otherwise messages will be handled in every tab leading to duplications.
 // Ideally, if Tab A connects first, then tab B connects secondly, B will not handle commands until A is closed.

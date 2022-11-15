@@ -2,7 +2,13 @@
 // More info: https://quasar.dev/quasar-cli/developing-browser-extensions/dom-hooks
 import { bexDom } from "quasar/wrappers"
 
-const log = (...args) => console.log("[bex] dom", ...args)
+/** Wrapper for console.log that adds a "[bex] dom" prefix infront of the logged message
+ *
+ * @param  {...any} args
+ */
+const log = (...args) => {
+  if (process.env.DEBUGGING) { console.log("[bex] dom:", ...args) }
+}
 
 async function getChat () {
   const playerPromise = new Promise((resolve) => {
