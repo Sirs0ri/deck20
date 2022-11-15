@@ -1,6 +1,6 @@
 {
   "name": "deck20",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Connect Roll20 to a Stream-Deck and add DSA related helpers/tools!",
   "productName": "Deck20",
   "author": "Maximilian Ertl <ertl.maxi@gmail.com>",
