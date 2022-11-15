@@ -21,7 +21,7 @@
       :style="icon === seasonIcon ? '' : 'scale: 0.9; opacity: 0'"
     />
 
-    <div v-if="store.restored" class="header">
+    <div v-if="currentView" class="header">
       <q-carousel
         ref="carousel"
         v-model="slide"
@@ -96,7 +96,7 @@
     </div>
 
     <div
-      v-if="store.restored"
+      v-if="currentView"
       class="footer grid-button"
       @click="showToday"
     >
@@ -126,10 +126,11 @@ import DayCell from "./CalendarDayItem.vue"
 const store = useCalendarStore()
 const { today } = storeToRefs(store)
 
+// Once the store is done restoring, "today" will be available, thus we can set the view
 store.restoration.then(() => showToday())
 
 // ========== UI TOOLS ==========
-const currentView = ref({ ...today.value, day: 1 })
+const currentView = ref(null)
 
 const slide = ref("bf")
 const carousel = ref(null)
@@ -141,7 +142,7 @@ function carouselPrev () {
 }
 
 const currentViewDays = computed(() => {
-  if (!store.restored) return []
+  if (!currentView.value) return []
 
   const view = unref(currentView)
 
@@ -215,7 +216,7 @@ const seasonIcons = [
 
 /** Get an icon for the meterological (not astronomical) season. */
 const seasonIcon = computed(() => {
-  if (!store.restored) return ""
+  if (!currentView.value) return ""
   switch (currentView.value.month) {
     case 3: // sep
     case 4: // okt
@@ -256,6 +257,7 @@ function onWheel (evt) {
 }
 
 function showNextMonth () {
+  if (!currentView.value) return
   if (currentView.value.month === months.length) {
     currentView.value.month = 1
     currentView.value.year++
@@ -264,6 +266,7 @@ function showNextMonth () {
   }
 }
 function showPreviousMonth () {
+  if (!currentView.value) return
   if (currentView.value.month === 1) {
     currentView.value.month = months.length
     currentView.value.year--
@@ -272,11 +275,14 @@ function showPreviousMonth () {
   }
 }
 function showNextYear () {
+  if (!currentView.value) return
   currentView.value.year++
 }
 function showPreviousYear () {
+  if (!currentView.value) return
   currentView.value.year--
 }
+/** Set the current view to the 1st day of `today`'s month */
 function showToday () {
   currentView.value = { ...today.value, day: 1 }
 }
