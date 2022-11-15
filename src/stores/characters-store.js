@@ -1,5 +1,6 @@
 import { computed, ref, unref, watch, reactive } from "vue"
 import { defineStore } from "pinia"
+import { uid as getUid } from "quasar"
 
 import { isBex, useBridge } from "src/utils/bexBridge"
 
@@ -8,6 +9,7 @@ const STORE_NAME = "characters"
 export const useCharacterStore = defineStore(STORE_NAME, () => {
   // ========== STATE ==========
   const characters = reactive({})
+  const uid = getUid()
 
   function setCharacter (key, data) {
     characters[key] = data
@@ -29,10 +31,11 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
   const restored = ref(false)
   const restoration = ref(null)
 
-  const { bexSend } = useBridge()
+  const { bexSend, bexOn } = useBridge()
 
   let timeout = null
   function persistDebounced () {
+    if (!restored.value) return
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(persist, 750)
   }
@@ -44,6 +47,7 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
       // Persist state via BEX bridge
       bexSend("persist-store", {
         key: STORE_NAME,
+        uid,
         value: {
           characters: unref(characters),
           currentCharacterKey: unref(currentCharacterKey),
@@ -76,6 +80,15 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
     return true
   }
 
+  bexOn("store-persisted", ({ data }) => {
+    if (data.uid !== uid) {
+      restored.value = false
+      restoration.value = restore().then((success) => {
+        restored.value = success
+      })
+    }
+  })
+
   restoration.value = restore().then((success) => {
     restored.value = success
   })
@@ -83,6 +96,7 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
   // #endregion
 
   return {
+    uid,
     restored,
     restoration,
     characters,

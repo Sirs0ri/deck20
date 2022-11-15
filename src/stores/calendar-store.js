@@ -1,5 +1,6 @@
 import { ref, watch } from "vue"
 import { defineStore } from "pinia"
+import { uid as getUid } from "quasar"
 
 import { addDays, dateEquals } from "src/utils/calendar"
 
@@ -9,6 +10,7 @@ const STORE_NAME = "calendar"
 
 export const useCalendarStore = defineStore(STORE_NAME, () => {
   // #region ========== STATE ==========
+  const uid = getUid()
 
   const initialDate = { day: 0, month: 0, year: 0 }
 
@@ -29,10 +31,11 @@ export const useCalendarStore = defineStore(STORE_NAME, () => {
   const restored = ref(false)
   const restoration = ref(null)
 
-  const { bexSend } = useBridge()
+  const { bexSend, bexOn } = useBridge()
 
   let timeout = null
   function persistDebounced () {
+    if (!restored.value) return
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(persist, 750)
   }
@@ -44,6 +47,7 @@ export const useCalendarStore = defineStore(STORE_NAME, () => {
       // Persist state via BEX bridge
       bexSend("persist-store", {
         key: STORE_NAME,
+        uid,
         value: {
           today: today.value,
         },
@@ -66,6 +70,14 @@ export const useCalendarStore = defineStore(STORE_NAME, () => {
     today.value = { day: 1, month: 5, year: 1019 }
     return true
   }
+  bexOn("store-persisted", ({ data }) => {
+    if (data.uid !== uid) {
+      restored.value = false
+      restoration.value = restore().then((success) => {
+        restored.value = success
+      })
+    }
+  })
 
   restoration.value = restore().then((success) => {
     restored.value = success

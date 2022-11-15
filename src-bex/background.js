@@ -140,8 +140,11 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
   bridge.on("persist-store", ({ data, respond }) => {
     // TODO: Get state from somewhere
-    chrome.storage.local.set({ [data.key]: data.value }, () => {
+    const { key, uid, value } = data
+
+    chrome.storage.local.set({ [key]: value }, () => {
       respond(true)
+      bridge.send("store-persisted", { key, uid })
     })
   })
 
