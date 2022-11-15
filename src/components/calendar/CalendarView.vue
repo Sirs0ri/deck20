@@ -1,7 +1,7 @@
 <template>
   <div
     class="calendar"
-    @wheel="onWheel"
+    @wheel.prevent="onWheel"
     @click.middle="showToday()"
   >
     <q-icon
