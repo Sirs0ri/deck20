@@ -42,20 +42,17 @@ const resetIFrameHeight = () => {
  */
 iFrame.id = "bex-app-iframe"
 iFrame.width = "32px"
-// iFrame.width = "375px"
 resetIFrameHeight()
 
 // Assign some styling so it looks seamless
 Object.assign(iFrame.style, {
   position: "fixed",
   right: "8px",
-  bottom: "16px",
-  // top: "0",
-  // left: "0",
+  bottom: "12px",
   border: "0",
   zIndex: "9999999", // Make sure it's on top
-  overflow: "visible",
-  pointerEvents: "none",
+  overflow: "hidden",
+  // pointerEvents: "none",
 })
 
 ;(function () {

@@ -42,7 +42,7 @@
         "assets/content.css"
       ],
       "js": [
-        "my-content-script.js"
+        "deck20-content-script.js"
       ]
     }
   ],
