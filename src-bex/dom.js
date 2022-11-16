@@ -52,7 +52,7 @@ async function injectChatAutocompleteResponder (func) {
     })
   }
 
-  window.d20.textchat.$textarea.autocomplete("option", "source", newResponder)
+  chat.$textarea.autocomplete("option", "source", newResponder)
 }
 
 /** Wait for the chat to load, then inject a function into the process of
@@ -63,19 +63,43 @@ async function injectChatAutocompleteResponder (func) {
  *
  * @param {Function} func Function to be injected
  */
-async function injectChatInputHandler (func) {
+async function injectChatSendHandler (func) {
   const chat = await getChat(true)
   const ogHandler = chat.doChatInput
 
   function newHandler (msg, src = "chatbox", callbackId = undefined, arg4 = void 0) {
     // src: [chatbox, quickdice, charsheet]
     // callbackId: will be added as "listenerid" into the message. Additionally, there'll be a jQuery event with the handler "mancerroll:<callbackId>" on $(document)
-    const stopProcessing = func(msg, src, callbackId, arg4)
-    if (stopProcessing) return
-    ogHandler(msg, src, callbackId, arg4)
+    func(msg, src, callbackId, arg4).then(stopProcessing => {
+      if (!stopProcessing) ogHandler(msg, src, callbackId, arg4)
+    })
   }
 
-  window.currentPlayer.d20.textchat.doChatInput = newHandler
+  chat.doChatInput = newHandler
+}
+
+/** Wait for the chat to load, then inject a function into the process of
+ * handling an imcoming message.
+ *
+ * @param {Function} func Function to be injected
+ */
+async function injectChatIncomingHandler (func) {
+  const chat = await getChat(true)
+  const ogHandler = chat.incoming
+
+  /**
+   * Process an incoming chat message
+   * @param {Boolean} isChatMsg true for player-sent messages, false for system messages
+   * @param {Objhect} msg message-Object
+   * @param  {...any} incArgs unknown
+   */
+  function newHandler (isChatMsg, msg, arg1 = undefined, arg2 = undefined) {
+    func(isChatMsg, msg, arg1, arg2).then(stopProcessing => {
+      if (!stopProcessing) ogHandler(isChatMsg, msg, arg1, arg2)
+    })
+  }
+
+  chat.incoming = newHandler
 }
 
 /** Send a chatmessage, wrapped as promise.
@@ -93,6 +117,78 @@ async function doChatInputAsync (msg) {
   chat.doChatInput(msg, "chatbox", uuid)
   return result
 }
+
+async function queryInputFromPlayer (title, defaultVal, asNumber = false) {
+  log(title, defaultVal, asNumber)
+  return new Promise((resolve, reject) => {
+    const dialogHtml = `<div>
+      <p style='font-size: 1.15em;'>
+        <strong>${window.d20.utils.strip_tags(title)}:</strong>
+        <input type='${asNumber ? "number" : "text"}' style='width: 75px; margin-left: 5px;'>
+      </p>
+    </div>`
+
+    const dialogEl = window.$(dialogHtml)
+
+    const destroyAndResolve = (value) => {
+      dialogEl.off()
+      dialogEl.dialog("destroy").remove()
+
+      if (!value) {
+        reject()
+        return
+      }
+
+      window.d20.textchat.$textarea.focus()
+      if (asNumber) resolve(parseFloat(value))
+      else resolve(value)
+    }
+
+    dialogEl.dialog({
+      title: "Input Value",
+      beforeClose () {
+        return false
+      },
+      buttons: {
+        Submit () {
+          const value = dialogEl.find("input").val()
+          destroyAndResolve(value)
+        },
+        Cancel () {
+          destroyAndResolve()
+        },
+      },
+    })
+
+    dialogEl.on("keydown", "input, select", evt => {
+      // Only react to ENTER press
+      if (evt.which !== 13) return
+
+      evt.stopPropagation()
+      evt.preventDefault()
+      const value = dialogEl.find("input").val()
+      destroyAndResolve(value)
+    })
+
+    requestAnimationFrame(() => {
+      if (defaultVal != null) dialogEl.find("input").val(defaultVal).select()
+      else dialogEl.find("input").focus()
+    })
+  })
+}
+
+// async function showSystemMessageToLocalPlayer (msg) {
+//   // This sends a chat message with the type "system".
+//   // Alternatives are "rollresult", "gmrollresult", "whisper", "advancedroll", "emote"
+//   // if the messageObj has a "messageid" attribute, there'll be a mancerroll: event. See doChatInputAsync above
+//   const chat = await getChat()
+//   const messageObj = {
+//     who: "system",
+//     type: "system",
+//     content: msg,
+//   }
+//   chat.incoming(/* isChatMessage? */ false, /* message */ messageObj)
+// }
 
 export default bexDom(async (bridge) => {
   // This runs in the context of a tab with an allowlisted origin
@@ -115,23 +211,112 @@ export default bexDom(async (bridge) => {
   })
 
   // Inject new handlers
-  function logChatMessage (msg, origin, callbackId, arg4) {
-    log("new outgoing message:", `"${msg}" via "${origin}".`, "extra args:", callbackId, arg4)
-  }
-  injectChatInputHandler(logChatMessage)
 
-  async function logAutocompleteQuery (query) {
+  async function interceptAutocompleteQuery (query) {
     log("autocomplete query:", query)
 
     if (query.term.startsWith("/t")) {
       const msg = query.term.substring(2).toLowerCase().trim()
-      return await bridgedMessage("ui", "query-talents", { msg }).then(data => {
+      return await bridgedMessage("ui", "query-talents", { filter: msg }).then(data => {
         log("character:", data)
         return data.result
       })
     }
   }
-  injectChatAutocompleteResponder(logAutocompleteQuery)
+  injectChatAutocompleteResponder(interceptAutocompleteQuery)
+
+  async function interceptSendChatMessage (msg, origin, callbackId, arg4) {
+    log("new outgoing message:", `"${msg}" via "${origin}".`, "extra args:", callbackId, arg4)
+    if (msg.startsWith("/t ")) {
+      const talentName = msg.substring(2).toLowerCase().trim()
+      log("Got a query for a talent roll:", talentName)
+
+      // set up promises
+      let talentData
+      let attributeData
+      let talent
+      const dataRequest = bridgedMessage(
+        "ui",
+        "query-talents",
+        { filter: talentName },
+      )
+        .then(async data => {
+          talentData = data.result
+
+          if (!talentData.length) return
+          if (!talentData[0].talent) return
+
+          talent = talentData[0].talent
+          log("got a talent:", talent)
+
+          attributeData = await bridgedMessage(
+            "ui",
+            "query-attributes",
+            { filter: talent.attributes },
+          )
+            .then(d => d.result)
+
+          log("got attributeData:", attributeData)
+        })
+
+      // Query modifier
+      const mod = await queryInputFromPlayer("Erschwernis (+) oder Erleichterung (-)", 0, true)
+
+      // await promises
+      await dataRequest
+
+      const attr0 = attributeData.find(a => a.attribute.short === talent.attributes[0]).attribute
+      const attr1 = attributeData.find(a => a.attribute.short === talent.attributes[1]).attribute
+      const attr2 = attributeData.find(a => a.attribute.short === talent.attributes[2]).attribute
+
+      const attr0string = `${attr0.value} [${attr0.short}]`
+      const attr1string = `${attr1.value} [${attr1.short}]`
+      const attr2string = `${attr2.value} [${attr2.short}]`
+
+      const maxValue = talent.value - mod
+      const rollQuery = (maxValue < 0) ? `[[d20cs1cf20 + ${-maxValue}[mod-TaW]]]` : "[[d20cs1cf20]]"
+
+      // TODO: gm roll state?
+      // Get character info from linked character?
+      const message = `@{Kilho von Viekis Stamm|gm_roll_opt} \
+&{template:default} \
+{{name= ${talent.name} }} \
+{{ TaW=  ${talent.value} }} \
+{{ Mod= ${mod} }} \
+{{ TaW*= [[ { ( ${Math.max(maxValue, 0)} [TaP*] - { ${rollQuery} - ( ${attr0string} ) , 0}kh1 - { ${rollQuery} - ( ${attr1string} ) , 0}kh1 - { ${rollQuery} - ( ${attr2string} ) , 0}kh1 ) , ( ${talent.value} + 0d1) }dh1 ]] }} \
+{{ Wurf 1= $[[0]] vs ${attr0string} }} \
+{{ Wurf 2= $[[1]] vs ${attr1string} }} \
+{{ Wurf 3= $[[2]] vs ${attr2string} }}`
+
+      doChatInputAsync(message).then(msgData => {
+        log("result of the roll", msgData)
+
+        const total = msgData.inlinerolls[3].results.total
+
+        const toPersist = {
+          talent,
+          success: total >= 0,
+          total,
+          msgData,
+        }
+
+        bridgedMessage("ui", "persist-roll", toPersist)
+      })
+
+      // showSystemMessageToLocalPlayer(`<strong>${talent.name}</strong><br>
+      //   TaW: ${talent.value} <br>
+      //   ${attributeData.map(a => `${a.attribute.name} vs ${a.attribute.value}`).join("<br>")}
+      //   <pre>${JSON.stringify(talent, null, 4)}</pre>`)
+      return true
+    }
+    log("not handling it...")
+  }
+  injectChatSendHandler(interceptSendChatMessage)
+
+  async function interceptIncomingChatMessage (isChatMsg, msg, ...incArgs) {
+    console.log("incoming chat message:", isChatMsg, msg, ...incArgs)
+  }
+  injectChatIncomingHandler(interceptIncomingChatMessage)
 
   // React to forwarded messages from the content script
   bridge.on("send-message", ({ data }) => {

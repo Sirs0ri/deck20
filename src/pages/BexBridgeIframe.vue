@@ -9,6 +9,7 @@
 import { useQuasar } from "quasar"
 import { storeToRefs } from "pinia"
 import { useCharacterStore } from "src/stores/characters-store"
+import { useRollsStore } from "src/stores/rolls-store"
 import { useBridge } from "src/utils/bexBridge"
 
 /** Wrapper for console.log that adds a "[bex] iframe" prefix infront of the logged message
@@ -23,26 +24,46 @@ log("active", Date.now())
 
 const $q = useQuasar()
 
-useBridge($q.bex)
+const { bexOn } = useBridge($q.bex)
 
-const store = useCharacterStore()
-const { currentCharacter, restoration } = storeToRefs(store)
+const charStore = useCharacterStore()
+const { currentCharacter } = storeToRefs(charStore)
 
-$q.bex.on("query-talents", async ({ data }) => {
+const rollStore = useRollsStore()
+
+bexOn("query-talents", async ({ data }) => {
   log("got query-talents", data, "responding with character info")
 
   if (!data._pathing) return
 
   const { uuid, src } = data._pathing
 
-  await (restoration.value)
+  await (charStore.restoration)
 
-  let talents = Object.values(currentCharacter.value.talents)
+  let talents = []
 
-  // log("all talents:", talents)
+  for (const t of Object.values(currentCharacter.value.talents)) {
+    talents.push(t)
 
-  if (data.msg) {
-    const re = new RegExp(data.msg, "i")
+    for (const [extraname, extraValue] of Object.entries(t.extraRolls)) {
+      talents.push({
+        attributes: t.attributes,
+        extraRolls: {},
+        group: t.group,
+        name: `${t.name} (${extraname})`,
+        specializations: [],
+        value: extraValue,
+      })
+    }
+  }
+
+  if (data.filter) {
+    const rExpIllegals = /[.*+?^${}()|[\]\\]/g
+    const rExpEscape = (word) => word.replace(rExpIllegals, "\\$&")
+
+    const str = (data.filter instanceof Array) ? data.filter.map(word => `(${rExpEscape(word)})`).join("|") : rExpEscape(data.filter)
+    const re = new RegExp(str, "i")
+    log(re)
     talents = talents.filter(t => t.name.match(re))
   }
 
@@ -52,6 +73,47 @@ $q.bex.on("query-talents", async ({ data }) => {
       result: talents.map(t => ({
         label: `${t.name} (${t.attributes.join("/")}): ${t.value}`,
         value: t.name,
+        talent: t,
+      })),
+      _pathing: {
+        uuid,
+        src: "ui",
+        dst: src,
+        lastFwd: "ui",
+      },
+    },
+  }
+  log("returning response", responseMsg)
+  $q.bex.send("bridge-forward", responseMsg)
+})
+
+bexOn("query-attributes", async ({ data }) => {
+  log("got query-attributes", data, "responding with character info")
+
+  if (!data._pathing) return
+
+  const { uuid, src } = data._pathing
+
+  await (charStore.restoration)
+
+  let attributes = Object.values(currentCharacter.value.attributes)
+
+  if (data.filter) {
+    const rExpIllegals = /[.*+?^${}()|[\]\\]/g
+    const rExpEscape = (word) => word.replace(rExpIllegals, "\\$&")
+
+    const str = (data.filter instanceof Array) ? data.filter.map(word => `(${rExpEscape(word)})`).join("|") : rExpEscape(data.filter)
+    const re = new RegExp(str, "i")
+    attributes = attributes.filter(a => a.short.match(re))
+  }
+
+  const responseMsg = {
+    command: `bridge-response.${uuid}`,
+    data: {
+      result: attributes.map(a => ({
+        label: `${a.name}: ${a.value}`,
+        value: a.name,
+        attribute: a,
       })),
       _pathing: {
         uuid,
@@ -75,7 +137,7 @@ body {
 <style lang="scss" scoped>
 .info-avatar {
   position: fixed;
-  bottom: 0;
-  right: 0;
+  inset: 0;
+  margin: auto;
 }
 </style>
