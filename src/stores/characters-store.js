@@ -80,7 +80,7 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
     return true
   }
 
-  bexOn("store-persisted", ({ data }) => {
+  bexOn(`store-persisted.${STORE_NAME}`, ({ data }) => {
     if (data.uid !== uid) {
       restored.value = false
       restoration.value = restore().then((success) => {

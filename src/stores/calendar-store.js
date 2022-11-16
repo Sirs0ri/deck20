@@ -70,7 +70,7 @@ export const useCalendarStore = defineStore(STORE_NAME, () => {
     today.value = { day: 1, month: 5, year: 1019 }
     return true
   }
-  bexOn("store-persisted", ({ data }) => {
+  bexOn(`store-persisted.${STORE_NAME}`, ({ data }) => {
     if (data.uid !== uid) {
       restored.value = false
       restoration.value = restore().then((success) => {

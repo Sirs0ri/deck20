@@ -208,7 +208,10 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
     chrome.storage.local.set({ [key]: value }, () => {
       respond(true)
-      bridge.send("store-persisted", { key, uid })
+      // Inform other instances of the store that something's changed, because
+      // the different contexts of the BEX (iframe, popup, options page) don't
+      // share states
+      bridge.send(`store-persisted.${key}`, { uid })
     })
   })
 
