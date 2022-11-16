@@ -752,7 +752,7 @@
       const { key, uid, value } = data;
       chrome.storage.local.set({ [key]: value }, () => {
         respond(true);
-        bridge.send("store-persisted", { key, uid });
+        bridge.send(`store-persisted.${key}`, { uid });
       });
     });
   });

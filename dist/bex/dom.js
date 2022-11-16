@@ -15969,18 +15969,29 @@ Component that was made reactive: `, type);
         ogResponder(request, respond);
       });
     }
-    window.d20.textchat.$textarea.autocomplete("option", "source", newResponder);
+    chat.$textarea.autocomplete("option", "source", newResponder);
   }
-  async function injectChatInputHandler(func) {
+  async function injectChatSendHandler(func) {
     const chat = await getChat(true);
     const ogHandler = chat.doChatInput;
     function newHandler(msg, src = "chatbox", callbackId = void 0, arg4 = void 0) {
-      const stopProcessing = func(msg, src, callbackId, arg4);
-      if (stopProcessing)
-        return;
-      ogHandler(msg, src, callbackId, arg4);
+      func(msg, src, callbackId, arg4).then((stopProcessing) => {
+        if (!stopProcessing)
+          ogHandler(msg, src, callbackId, arg4);
+      });
     }
-    window.currentPlayer.d20.textchat.doChatInput = newHandler;
+    chat.doChatInput = newHandler;
+  }
+  async function injectChatIncomingHandler(func) {
+    const chat = await getChat(true);
+    const ogHandler = chat.incoming;
+    function newHandler(isChatMsg, msg, arg1 = void 0, arg2 = void 0) {
+      func(isChatMsg, msg, arg1, arg2).then((stopProcessing) => {
+        if (!stopProcessing)
+          ogHandler(isChatMsg, msg, arg1, arg2);
+      });
+    }
+    chat.incoming = newHandler;
   }
   async function doChatInputAsync(msg) {
     const uuid = uid$3();
@@ -15993,6 +16004,60 @@ Component that was made reactive: `, type);
     chat.doChatInput(msg, "chatbox", uuid);
     return result;
   }
+  async function queryInputFromPlayer(title, defaultVal, asNumber = false) {
+    log(title, defaultVal, asNumber);
+    return new Promise((resolve, reject) => {
+      const dialogHtml = `<div>
+      <p style='font-size: 1.15em;'>
+        <strong>${window.d20.utils.strip_tags(title)}:</strong>
+        <input type='${asNumber ? "number" : "text"}' style='width: 75px; margin-left: 5px;'>
+      </p>
+    </div>`;
+      const dialogEl = window.$(dialogHtml);
+      const destroyAndResolve = (value2) => {
+        dialogEl.off();
+        dialogEl.dialog("destroy").remove();
+        if (!value2) {
+          reject();
+          return;
+        }
+        window.d20.textchat.$textarea.focus();
+        if (asNumber)
+          resolve(parseFloat(value2));
+        else
+          resolve(value2);
+      };
+      dialogEl.dialog({
+        title: "Input Value",
+        beforeClose() {
+          return false;
+        },
+        buttons: {
+          Submit() {
+            const value2 = dialogEl.find("input").val();
+            destroyAndResolve(value2);
+          },
+          Cancel() {
+            destroyAndResolve();
+          }
+        }
+      });
+      dialogEl.on("keydown", "input, select", (evt) => {
+        if (evt.which !== 13)
+          return;
+        evt.stopPropagation();
+        evt.preventDefault();
+        const value2 = dialogEl.find("input").val();
+        destroyAndResolve(value2);
+      });
+      requestAnimationFrame(() => {
+        if (defaultVal != null)
+          dialogEl.find("input").val(defaultVal).select();
+        else
+          dialogEl.find("input").focus();
+      });
+    });
+  }
   var dom_default = (0, import_wrappers.bexDom)(async (bridge2) => {
     log("active", Date.now());
     getChat(true).then((chat) => {
@@ -16003,21 +16068,75 @@ Component that was made reactive: `, type);
       log("Chat connected");
       chat.doChatInput("/talktomyself on");
     });
-    function logChatMessage(msg, origin, callbackId, arg4) {
-      log("new outgoing message:", `"${msg}" via "${origin}".`, "extra args:", callbackId, arg4);
-    }
-    injectChatInputHandler(logChatMessage);
-    async function logAutocompleteQuery(query) {
+    async function interceptAutocompleteQuery(query) {
       log("autocomplete query:", query);
       if (query.term.startsWith("/t")) {
         const msg = query.term.substring(2).toLowerCase().trim();
-        return await bridgedMessage("ui", "query-talents", { msg }).then((data) => {
+        return await bridgedMessage("ui", "query-talents", { filter: msg }).then((data) => {
           log("character:", data);
           return data.result;
         });
       }
     }
-    injectChatAutocompleteResponder(logAutocompleteQuery);
+    injectChatAutocompleteResponder(interceptAutocompleteQuery);
+    async function interceptSendChatMessage(msg, origin, callbackId, arg4) {
+      log("new outgoing message:", `"${msg}" via "${origin}".`, "extra args:", callbackId, arg4);
+      if (msg.startsWith("/t ")) {
+        const talentName = msg.substring(2).toLowerCase().trim();
+        log("Got a query for a talent roll:", talentName);
+        let talentData;
+        let attributeData;
+        let talent;
+        const dataRequest = bridgedMessage(
+          "ui",
+          "query-talents",
+          { filter: talentName }
+        ).then(async (data) => {
+          talentData = data.result;
+          if (!talentData.length)
+            return;
+          if (!talentData[0].talent)
+            return;
+          talent = talentData[0].talent;
+          log("got a talent:", talent);
+          attributeData = await bridgedMessage(
+            "ui",
+            "query-attributes",
+            { filter: talent.attributes }
+          ).then((d) => d.result);
+          log("got attributeData:", attributeData);
+        });
+        const mod2 = await queryInputFromPlayer("Erschwernis (+) oder Erleichterung (-)", 0, true);
+        await dataRequest;
+        const attr0 = attributeData.find((a) => a.attribute.short === talent.attributes[0]).attribute;
+        const attr1 = attributeData.find((a) => a.attribute.short === talent.attributes[1]).attribute;
+        const attr2 = attributeData.find((a) => a.attribute.short === talent.attributes[2]).attribute;
+        const attr0string = `${attr0.value} [${attr0.short}]`;
+        const attr1string = `${attr1.value} [${attr1.short}]`;
+        const attr2string = `${attr2.value} [${attr2.short}]`;
+        const maxValue = talent.value - mod2;
+        const rollQuery = maxValue < 0 ? `[[d20cs1cf20 + ${-maxValue}[mod-TaW]]]` : "[[d20cs1cf20]]";
+        const message = `@{Kilho von Viekis Stamm|gm_roll_opt} &{template:default} {{name= ${talent.name} }} {{ TaW=  ${talent.value} }} {{ Mod= ${mod2} }} {{ TaW*= [[ { ( ${Math.max(maxValue, 0)} [TaP*] - { ${rollQuery} - ( ${attr0string} ) , 0}kh1 - { ${rollQuery} - ( ${attr1string} ) , 0}kh1 - { ${rollQuery} - ( ${attr2string} ) , 0}kh1 ) , ( ${talent.value} + 0d1) }dh1 ]] }} {{ Wurf 1= $[[0]] vs ${attr0string} }} {{ Wurf 2= $[[1]] vs ${attr1string} }} {{ Wurf 3= $[[2]] vs ${attr2string} }}`;
+        doChatInputAsync(message).then((msgData) => {
+          log("result of the roll", msgData);
+          const total = msgData.inlinerolls[3].results.total;
+          const toPersist = {
+            talent,
+            success: total >= 0,
+            total,
+            msgData
+          };
+          bridgedMessage("ui", "persist-roll", toPersist);
+        });
+        return true;
+      }
+      log("not handling it...");
+    }
+    injectChatSendHandler(interceptSendChatMessage);
+    async function interceptIncomingChatMessage(isChatMsg, msg, ...incArgs) {
+      console.log("incoming chat message:", isChatMsg, msg, ...incArgs);
+    }
+    injectChatIncomingHandler(interceptIncomingChatMessage);
     bridge2.on("send-message", ({ data }) => {
       log("got a request to send a message:", data);
       doChatInputAsync(data.msg).then((chatMsg) => {
