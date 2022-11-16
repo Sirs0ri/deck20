@@ -6,14 +6,14 @@
 // Check documentation for full list of Quasar variables
 // https://quasar.dev/style/sass-scss-variables#variables-list
 
-$primary   : #1976D2;
-$secondary : #26A69A;
-$accent    : #9C27B0;
+$primary   : hsl(194, 99%, 40%);
+$secondary : hsl(174, 63%, 40%);
+$accent    : hsl(291, 64%, 42%);
 
-$dark      : #1D1D1D;
-$dark-page : #121212;
+$dark      : hsl(0, 0%, 11%);
+$dark-page : hsl(0, 0%, 7%);
 
-$positive  : #21BA45;
-$negative  : #C10015;
-$info      : #31CCEC;
-$warning   : #F2C037;
+$positive  : hsl(134, 70%, 43%);
+$negative  : hsl(353, 100%, 38%);
+$info      : hsl(190, 83%, 56%);
+$warning   : hsl(44, 88%, 58%);
