@@ -126,6 +126,11 @@ bexOn("query-attributes", async ({ data }) => {
   log("returning response", responseMsg)
   $q.bex.send("bridge-forward", responseMsg)
 })
+
+bexOn("persist-roll", ({ data }) => {
+  log("I was asked to persist a roll:", data)
+  if (data?.msgData?.id) rollStore.addRoll(data, data.msgData.id)
+})
 </script>
 
 <style lang="scss">

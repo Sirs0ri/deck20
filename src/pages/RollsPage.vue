@@ -18,12 +18,19 @@
 <script setup>
 import { ref } from "vue"
 import { uid } from "quasar"
+import { useRollsStore } from "src/stores/rolls-store"
 import { useBridge } from "src/utils/bexBridge"
 
 const roll20Available = ref(false)
 const rollData = ref(null)
 
 const { bexSend, bexOn } = useBridge()
+
+const rollStore = useRollsStore()
+
+rollStore.restoration.then(() => {
+  console.log("There are", Object.keys(rollStore.rolls).length, "rolls stored")
+})
 
 // Query connected tabs
 console.log("querying connected Tabs")
