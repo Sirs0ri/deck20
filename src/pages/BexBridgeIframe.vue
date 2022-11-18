@@ -129,6 +129,9 @@ bexOn("query-attributes", async ({ data }) => {
 
 bexOn("persist-roll", ({ data }) => {
   log("I was asked to persist a roll:", data)
+  if (process.env.DEBUGGING) {
+    data.debug = true
+  }
   if (data?.msgData?.id) rollStore.addRoll(data, data.msgData.id)
 })
 </script>

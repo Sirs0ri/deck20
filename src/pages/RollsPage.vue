@@ -1,91 +1,112 @@
 <template>
-  <q-page class="flex flex-center column q-gutter-y-md q-pa-md">
-    <span>Rolls</span>
+  <q-page class="flex column q-gutter-y-md q-pa-md">
+    <q-list>
+      <q-item class="text-h4 header-item q-mb-md">
+        Würfe
+      </q-item>
 
-    <span>Roll20 is {{ roll20Available ? '' : 'not' }} connected</span>
-
-    <q-btn
-      outline
-      label="roll20 Hello World"
-      class="full-width"
-      @click="roll20HelloWorld"
-    />
-
-    <pre>{{ rollData }}</pre>
+      <q-item v-for="(roll, id) in rollStore.rolls" :key="id">
+        <q-item-section top>
+          <q-item-label>{{ roll.talent.name }}</q-item-label>
+          <q-item-label v-if="getIsVisible(id)" style="word-break: break-all;">
+            {{/* eslint-disable-next-line vue/no-v-html */}}
+            <div v-html="getRollHtml(id)" />
+          </q-item-label>
+          <q-item-label v-else caption>
+            TaW: {{ roll.talent.value }}
+            TaP*: {{ roll.total }}
+            Mod: {{ roll.msgData?.original_content?.match(reModifier)?.[1] || "unbekannt" }}
+          </q-item-label>
+        </q-item-section>
+        <q-item-section side top>
+          <q-btn
+            :icon="getIsVisible(id) ? 'sym_r_expand_less' : 'sym_r_expand_more'"
+            round
+            flat
+            @click="toggleRollView(id)"
+          />
+        </q-item-section>
+      </q-item>
+    </q-list>
   </q-page>
 </template>
 
 <script setup>
 import { ref } from "vue"
-import { uid } from "quasar"
 import { useRollsStore } from "src/stores/rolls-store"
-import { useBridge } from "src/utils/bexBridge"
-
-const roll20Available = ref(false)
-const rollData = ref(null)
-
-const { bexSend, bexOn } = useBridge()
 
 const rollStore = useRollsStore()
 
 rollStore.restoration.then(() => {
   console.log("There are", Object.keys(rollStore.rolls).length, "rolls stored")
+  console.log(rollStore.rolls)
 })
 
-// Query connected tabs
-console.log("querying connected Tabs")
-bexSend("query-connected-tabs").then(({ data }) => {
-  console.log("connected tabs:", data)
-  if (data == null) return
-  if (data > 0) roll20Available.value = true
-})
-
-async function roll20HelloWorld () {
-  bridgedMessage("dom", "send-message", { msg: "/w max Hello World" })
-    .then(data => {
-      console.log("got a response:", data)
-      rollData.value = data
-    })
+// #region ========== Roll Items ==========
+const activeItems = ref([])
+function toggleRollView (id) {
+  const index = activeItems.value.indexOf(id)
+  if (index >= 0) {
+    activeItems.value.splice(index, 1)
+    return
+  }
+  activeItems.value.push(id)
+}
+function getIsVisible (id) {
+  return activeItems.value.includes(id)
 }
 
-async function bridgedMessage (dst, command, data = {}, timeout = -1) {
-  return new Promise((resolve, reject) => {
-    const uuid = uid()
-    let off
+const reInlineRoll = /\$\[\[(?<name>\d)]]/g
+const reModifier = /{{\s*mod\s*=\s*(\d+)\s*}}/i
 
-    // Set up timeout, if necessary
-    if (timeout >= 0) {
-      setTimeout(() => {
-        off && off()
-        reject("Timeout")
-      }, timeout)
-    }
+function getRollHtml (id) {
+  const roll = rollStore.rolls[id]
 
-    if (dst === "background") {
-      // We can talk to the background script, send the command directly
-      bexSend(command, data).then(data => {
-        resolve(data)
-      })
-    } else {
-      // Set up handler for the answer
-      off = bexOn(`bridge-response.${uuid}`, ({ data, respond }) => {
-        off()
-        resolve(data)
-      })
+  const getSpanWithTooltip = (textContent, tooltip) => {
+    return `<span title="${tooltip}">${textContent}</span>`
+  }
 
-      data._pathing = {
-        uuid,
-        src: "ui",
-        dst,
-        lastFwd: "ui",
-      }
-
-      // Send command
-      bexSend("bridge-forward", {
-        command,
-        data,
-      })
-    }
+  const htmlStr = roll.msgData.content.replaceAll(reInlineRoll, (match, p1, offset, string, groups) => {
+    const num = parseInt(p1)
+    const inlineRoll = roll.msgData.inlinerolls[num]
+    return getSpanWithTooltip(inlineRoll.results.total, inlineRoll.expression)
   })
+
+  return htmlStr
 }
+// #endregion
 </script>
+
+<style lang="scss">
+.sheet-rolltemplate-default table {
+  width: 100%;
+  background-color: white;
+  border: 1px solid rgba(112, 32, 130, 1);
+}
+
+.sheet-rolltemplate-default caption {
+  background-color: rgba(112, 32, 130, 1);
+  color: white;
+  font-family: "Helvetica Neue", Helvetica, sans-serif;
+  font-weight: 300;
+  font-size: 1.1em;
+  padding: 5px;
+}
+
+.sheet-rolltemplate-default td {
+  padding: 5px;
+  line-height: 1.4em;
+  vertical-align: top;
+}
+
+.sheet-rolltemplate-default td:first-child {
+  font-weight: bold;
+  text-align: right;
+  min-width: 50px;
+  padding-right: 10px;
+}
+
+.sheet-rolltemplate-default tr:nth-child(even) {
+  background-color: #eee;
+}
+</style>
