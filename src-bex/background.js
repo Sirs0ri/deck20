@@ -13,6 +13,8 @@ let serverActive = false
 let port
 let connectedTabs = 0
 
+let serverUnavailable
+
 export default bexBackground((bridge /* , allActiveConnections */) => {
   // This runs in the background, when ever there is a bridge.
   // This can talk to the UI from src/
@@ -40,12 +42,43 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   // as soon as no connection is active anymore (via port.disconnect()),
   // Chrome kills the node application automatically.
 
-  function startServer () {
+  async function startServer () {
+    serverUnavailable = null
+    // if (serverUnavailable) return "Server not available"
     if (serverActive) return "Server already running"
 
-    log("starting server...")
+    const serverPromise = new Promise((resolve, reject) => {
+      log("starting server...")
+      const _port = chrome.runtime.connectNative("de.sirs0ri.deck20")
 
-    port = chrome.runtime.connectNative("de.sirs0ri.deck20")
+      _port.onDisconnect.addListener(() => {
+        if (chrome.runtime.lastError) {
+          log("Server failed to start.", chrome.runtime.lastError.message)
+          reject(chrome.runtime.lastError)
+        }
+      })
+
+      // The server failes *almost* instantly (within a single digit amount of
+      // ms), but not quite. Unfortunately there's no error to catch, only the
+      // chrome.runtime.lastError that might have a value in the onDisconnect-
+      // Callback.
+      // If this hasn't happened within 50 ms, it is save to assume the server
+      // is running.
+      setTimeout(() => {
+        resolve(_port)
+      }, 50)
+    })
+
+    port = await serverPromise.catch(e => {
+      console.warn("server not available!")
+      serverUnavailable = true
+      return null
+    })
+
+    if (!port) {
+      updateServerState(false)
+      return
+    }
 
     // Forward messages received from the server to the bridge
     port.onMessage.addListener((data) => {
@@ -55,13 +88,14 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
 
     port.onDisconnect.addListener(() => {
       log("Disconnected")
+      updateServerState(false)
     })
 
     updateServerState(true)
   }
 
   function stopServer () {
-    if (!serverActive) return "Server already stopped"
+    if (port == null || !serverActive) return "Server already stopped"
 
     log("stopping server...")
 
@@ -109,7 +143,21 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   updateServerState(serverActive)
 
   bridge.on("query-server-status", evt => {
-    evt.respond(serverActive)
+    if (serverActive) {
+      evt.respond({
+        active: serverActive,
+        unavailable: serverUnavailable,
+      })
+      return
+    }
+    // Test starting the server if it's not already running
+    startServer().then(() => {
+      evt.respond({
+        active: serverActive,
+        unavailable: serverUnavailable,
+      })
+      if (serverActive) stopServer()
+    })
   })
 
   bridge.on("toggle-server", evt => {

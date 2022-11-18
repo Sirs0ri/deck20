@@ -40,7 +40,7 @@ function toggleServer () {
 // Set up BEX Bridge comms
 bexSend("query-server-status").then(({ data }) => {
   if (!data) return
-  serverActive.value = data
+  serverActive.value = data.active
 })
 bexSend("query-connected-tabs").then(({ data }) => {
   if (!data) return

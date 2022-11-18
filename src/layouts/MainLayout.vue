@@ -83,9 +83,11 @@ if (isBex) {
 
 // Handle server state
 const serverActive = ref(false)
+const serverAvailable = ref(true)
 bexSend("query-server-status").then(({ data }) => {
-  if (!data) return
-  serverActive.value = data
+  if (data.unavailable) serverAvailable.value = false
+  else serverAvailable.value = true
+  serverActive.value = data.active
 })
 
 const serverStatusCallback = ({ data, respond }) => {
@@ -130,7 +132,7 @@ const essentialLinks = computed(() => {
     class: "",
   })
   // Only for Browser Extensions
-  isBex && l.push({
+  isBex && serverAvailable.value && l.push({
     title: "Server",
     icon: "sym_r_terminal",
     link: "/server",
