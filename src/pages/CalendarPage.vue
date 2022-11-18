@@ -41,7 +41,8 @@ function sendToRoll20 (evt) {
   const sendPublicly = evt.ctrlKey
 
   bridgedMessage("dom", "send-message", {
-    msg: `${sendPublicly ? "" : "/w Max "}Heute ist der ${getFormattedDate(store.today)}`,
+    msg: `Heute ist der ${getFormattedDate(store.today)}`,
+    target: sendPublicly ? "" : "MYSELF",
   })
 }
 

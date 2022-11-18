@@ -107,10 +107,14 @@ async function injectChatIncomingHandler (func) {
  * @param {String} msg Message to be sent
  * @returns {Object} Roll20's chat object of the sent message
  */
-async function doChatInputAsync (msg) {
+async function doChatInputAsync (msg, target) {
   const uuid = uid()
 
   const chat = await getChat()
+  if (target === "MYSELF") target = (window.currentPlayer.attributes.displayname || "").split(" ")[0]
+
+  if (target) msg = `/w ${target} ${msg}`
+
   const result = new Promise(resolve => {
     window.$(document).one(`mancerroll:${uuid}`, (_evt, msg) => { resolve(msg) })
   })
@@ -322,26 +326,7 @@ export default bexDom(async (bridge) => {
   bridge.on("send-message", ({ data }) => {
     log("got a request to send a message:", data)
     doChatInputAsync(data.msg)
-      .then(chatMsg => {
-        if (!data._pathing) return
-
-        const { uuid, src } = data._pathing
-
-        const responseMsg = {
-          command: `bridge-response.${uuid}`,
-          data: {
-            chatMsg,
-            _pathing: {
-              uuid,
-              src: "dom",
-              dst: src,
-              lastFwd: "dom",
-            },
-          },
-        }
-        log("returning response", responseMsg)
-        bridge.send("bridge-forward", responseMsg)
-      })
+      .then(chatMsg => { bridgedResponse(data._pathing, { chatMsg }) })
   })
 
   async function bridgedMessage (dst, command, data = {}, timeout = -1) {
@@ -378,6 +363,27 @@ export default bexDom(async (bridge) => {
         data,
       })
     })
+  }
+
+  function bridgedResponse (pathing, data) {
+    if (!pathing) return
+
+    const { uuid, src } = pathing
+
+    const responseMsg = {
+      command: `bridge-response.${uuid}`,
+      data: {
+        ...data,
+        _pathing: {
+          uuid,
+          src: "dom",
+          dst: src,
+          lastFwd: "dom",
+        },
+      },
+    }
+    log("returning response", responseMsg)
+    bridge.send("bridge-forward", responseMsg)
   }
 
   // #region ========== bridge forwarding ==========
