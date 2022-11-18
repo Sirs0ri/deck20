@@ -9,7 +9,7 @@
         <q-item-section top>
           <q-item-label>{{ roll.talent.name }}</q-item-label>
           <q-item-label v-if="getIsVisible(id)" style="word-break: break-all;">
-            {{/* eslint-disable-next-line vue/no-v-html */}}
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <div v-html="getRollHtml(id)" />
           </q-item-label>
           <q-item-label v-else caption>
