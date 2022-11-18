@@ -22,7 +22,11 @@
               @keyup.enter.ctrl="toggleEditCharacter"
             />
           </q-item-section>
-          <q-item-section v-else style="min-height: 56px">
+          <q-item-section
+            v-else
+            top
+            style="min-height: 56px"
+          >
             <q-item-label>
               {{ currentCharacter.generalData.name }}
             </q-item-label>
