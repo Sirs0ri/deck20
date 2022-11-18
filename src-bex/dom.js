@@ -127,7 +127,7 @@ async function queryInputFromPlayer (title, defaultVal, asNumber = false) {
   return new Promise((resolve, reject) => {
     const dialogHtml = `<div>
       <p style='font-size: 1.15em;'>
-        <strong>${window.d20.utils.strip_tags(title)}:</strong>
+        <strong>${window.currentPlayer.d20.utils.strip_tags(title)}:</strong>
         <input type='${asNumber ? "number" : "text"}' style='width: 75px; margin-left: 5px;'>
       </p>
     </div>`
@@ -211,7 +211,9 @@ export default bexDom(async (bridge) => {
   // Await chat being fully loaded
   getChat().then(chat => {
     log("Chat connected")
-    chat.doChatInput("/talktomyself on")
+    if (process.env.DEBUGGING) {
+      chat.doChatInput("/talktomyself on")
+    }
   })
 
   // Inject new handlers
@@ -280,7 +282,7 @@ export default bexDom(async (bridge) => {
       const maxValue = talent.value - mod
       const rollQuery = (maxValue < 0) ? `[[d20cs1cf20 + ${-maxValue}[mod-TaW]]]` : "[[d20cs1cf20]]"
 
-      // TODO: gm roll state?
+      // TODO: gm roll state? Shouldn't be hard-coded...
       // Get character info from linked character?
       const message = `@{Kilho von Viekis Stamm|gm_roll_opt} \
 &{template:default} \
@@ -440,7 +442,7 @@ export default bexDom(async (bridge) => {
   //     who,
   //     type,
   //     content,
-  //     playerid: window.currentPlayer.id,
+  //     playerid: currentPlayer.id,
   //     avatar: "/users/avatar/3307558/30",
   //     inlinerolls: [],
   //   }
