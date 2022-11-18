@@ -64,5 +64,5 @@
   "name": "Deck20",
   "short_name": "Deck20",
   "description": "Connect Roll20 to a Stream-Deck and add DSA related helpers/tools!",
-  "version": "0.3.0"
+  "version": "0.4.0"
 }

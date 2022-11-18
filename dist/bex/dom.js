@@ -15993,9 +15993,13 @@ Component that was made reactive: `, type);
     }
     chat.incoming = newHandler;
   }
-  async function doChatInputAsync(msg) {
+  async function doChatInputAsync(msg, target2) {
     const uuid = uid$3();
     const chat = await getChat();
+    if (target2 === "MYSELF")
+      target2 = (window.currentPlayer.attributes.displayname || "").split(" ")[0];
+    if (target2)
+      msg = `/w ${target2} ${msg}`;
     const result = new Promise((resolve) => {
       window.$(document).one(`mancerroll:${uuid}`, (_evt, msg2) => {
         resolve(msg2);
@@ -16009,7 +16013,7 @@ Component that was made reactive: `, type);
     return new Promise((resolve, reject) => {
       const dialogHtml = `<div>
       <p style='font-size: 1.15em;'>
-        <strong>${window.d20.utils.strip_tags(title)}:</strong>
+        <strong>${window.currentPlayer.d20.utils.strip_tags(title)}:</strong>
         <input type='${asNumber ? "number" : "text"}' style='width: 75px; margin-left: 5px;'>
       </p>
     </div>`;
@@ -16066,7 +16070,9 @@ Component that was made reactive: `, type);
     });
     getChat().then((chat) => {
       log("Chat connected");
-      chat.doChatInput("/talktomyself on");
+      if (false) {
+        chat.doChatInput("/talktomyself on");
+      }
     });
     async function interceptAutocompleteQuery(query) {
       log("autocomplete query:", query);
@@ -16140,23 +16146,7 @@ Component that was made reactive: `, type);
     bridge2.on("send-message", ({ data }) => {
       log("got a request to send a message:", data);
       doChatInputAsync(data.msg).then((chatMsg) => {
-        if (!data._pathing)
-          return;
-        const { uuid, src } = data._pathing;
-        const responseMsg = {
-          command: `bridge-response.${uuid}`,
-          data: {
-            chatMsg,
-            _pathing: {
-              uuid,
-              src: "dom",
-              dst: src,
-              lastFwd: "dom"
-            }
-          }
-        };
-        log("returning response", responseMsg);
-        bridge2.send("bridge-forward", responseMsg);
+        bridgedResponse(data._pathing, { chatMsg });
       });
     });
     async function bridgedMessage(dst, command, data = {}, timeout2 = -1) {
@@ -16187,6 +16177,30 @@ Component that was made reactive: `, type);
         });
       });
     }
+    function bridgedResponse(pathing, data) {
+      if (!pathing)
+        return;
+      const { uuid, src } = pathing;
+      const responseMsg = {
+        command: `bridge-response.${uuid}`,
+        data: {
+          ...data,
+          _pathing: {
+            uuid,
+            src: "dom",
+            dst: src,
+            lastFwd: "dom"
+          }
+        }
+      };
+      log("returning response", responseMsg);
+      bridge2.send("bridge-forward", responseMsg);
+    }
+    bridge2.on("query-tokens", ({ data }) => {
+      log("getting tokens");
+      const tokens = window.currentPlayer.d20.Campaign.characters.models.filter((c) => c.attributes.controlledby === window.currentPlayer.attributes.id);
+      log(tokens);
+    });
     const CURRENT_BRIDGE_STEP = "dom";
     bridge2.on("bridge-forward", ({ data }) => {
       if (!data.pathing)

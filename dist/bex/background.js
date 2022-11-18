@@ -619,6 +619,7 @@
   var serverActive = false;
   var port;
   var connectedTabs = 0;
+  var serverUnavailable;
   var background_default = (0, import_wrappers.bexBackground)((bridge) => {
     log("active", Date.now(), { serverActive });
     function sendMessageToRoll20Dom({ command, data }) {
@@ -632,22 +633,44 @@
         }
       });
     }
-    function startServer() {
+    async function startServer() {
+      serverUnavailable = null;
       if (serverActive)
         return "Server already running";
-      log("starting server...");
-      port = chrome.runtime.connectNative("de.sirs0ri.deck20");
+      const serverPromise = new Promise((resolve, reject) => {
+        log("starting server...");
+        const _port = chrome.runtime.connectNative("de.sirs0ri.deck20");
+        _port.onDisconnect.addListener(() => {
+          if (chrome.runtime.lastError) {
+            log("Server failed to start.", chrome.runtime.lastError.message);
+            reject(chrome.runtime.lastError);
+          }
+        });
+        setTimeout(() => {
+          resolve(_port);
+        }, 50);
+      });
+      port = await serverPromise.catch((e) => {
+        console.warn("server not available!");
+        serverUnavailable = true;
+        return null;
+      });
+      if (!port) {
+        updateServerState(false);
+        return;
+      }
       port.onMessage.addListener((data) => {
         log("Received", data);
         sendMessageToRoll20Dom(data);
       });
       port.onDisconnect.addListener(() => {
         log("Disconnected");
+        updateServerState(false);
       });
       updateServerState(true);
     }
     function stopServer() {
-      if (!serverActive)
+      if (port == null || !serverActive)
         return "Server already stopped";
       log("stopping server...");
       port.disconnect();
@@ -677,7 +700,21 @@
     }
     updateServerState(serverActive);
     bridge.on("query-server-status", (evt) => {
-      evt.respond(serverActive);
+      if (serverActive) {
+        evt.respond({
+          active: serverActive,
+          unavailable: serverUnavailable
+        });
+        return;
+      }
+      startServer().then(() => {
+        evt.respond({
+          active: serverActive,
+          unavailable: serverUnavailable
+        });
+        if (serverActive)
+          stopServer();
+      });
     });
     bridge.on("toggle-server", (evt) => {
       if (!serverActive)
