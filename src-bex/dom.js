@@ -388,6 +388,14 @@ export default bexDom(async (bridge) => {
     bridge.send("bridge-forward", responseMsg)
   }
 
+  bridge.on("query-tokens", ({ data }) => {
+    log("getting tokens")
+
+    const tokens = window.currentPlayer.d20.Campaign.characters.models.filter(c => c.attributes.controlledby === window.currentPlayer.attributes.id)
+
+    log(tokens)
+  })
+
   // #region ========== bridge forwarding ==========
   // Set up forwarding from background.js to dom.js
   // ui -> background -> content -> dom
