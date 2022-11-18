@@ -1,20 +1,47 @@
 <template>
-  <q-page class="flex flex-center column q-gutter-y-md q-pa-md">
-    <q-btn
-      outline
-      :label="`Turn Server ${serverActive ? 'off' : 'on'}`"
-      class="full-width"
-      @click="toggleServer"
-    />
+  <q-page class="flex column q-gutter-y-md q-pa-md">
+    <q-list>
+      <q-item class="text-h4 header-item q-mb-md">
+        Server
+      </q-item>
 
-    <span>
-      Connected Tabs: {{ connectedTabs }}
-    </span>
+      <q-item>
+        <q-item-section>
+          <q-item-label>Roll20 is {{ roll20Available ? '' : 'not' }} connected</q-item-label>
+          <q-item-label caption>
+            Connected Tabs: {{ connectedTabs }}
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <q-item>
+        <q-btn
+          outline
+          :label="`Turn Server ${serverActive ? 'off' : 'on'}`"
+          class="full-width"
+          @click="toggleServer"
+        />
+      </q-item>
+
+      <q-item>
+        <q-btn
+          outline
+          label="roll20 Hello World"
+          class="full-width"
+          @click="roll20HelloWorld"
+        />
+      </q-item>
+
+      <q-item>
+        <pre style="white-space: pre-wrap;">{{ rollData }}</pre>
+      </q-item>
+    </q-list>
   </q-page>
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount } from "vue"
+import { ref, onBeforeUnmount, computed } from "vue"
+import { uid } from "quasar"
 // import { useQuasar } from "quasar"
 
 import { useBridge } from "src/utils/bexBridge"
@@ -43,9 +70,12 @@ bexSend("query-server-status").then(({ data }) => {
   serverActive.value = data.active
 })
 bexSend("query-connected-tabs").then(({ data }) => {
+  console.log("connected tabs:", data)
   if (!data) return
   connectedTabs.value = data
 })
+
+const roll20Available = computed(() => connectedTabs.value > 0)
 
 const serverStatusCallback = ({ data, respond }) => {
   log("got server status update", data)
@@ -58,5 +88,56 @@ const bexOffServerStatus = bexOn("server-status", serverStatusCallback)
 onBeforeUnmount(() => {
   bexOffServerStatus()
 })
+
+const rollData = ref(null)
+
+async function roll20HelloWorld () {
+  bridgedMessage("dom", "send-message", { msg: "Hello World", target: "MYSELF" })
+    .then(data => {
+      console.log("got a response:", data)
+      rollData.value = data
+    })
+}
+
+async function bridgedMessage (dst, command, data = {}, timeout = -1) {
+  return new Promise((resolve, reject) => {
+    const uuid = uid()
+    let off
+
+    // Set up timeout, if necessary
+    if (timeout >= 0) {
+      setTimeout(() => {
+        off && off()
+        reject("Timeout")
+      }, timeout)
+    }
+
+    if (dst === "background") {
+      // We can talk to the background script, send the command directly
+      bexSend(command, data).then(data => {
+        resolve(data)
+      })
+    } else {
+      // Set up handler for the answer
+      off = bexOn(`bridge-response.${uuid}`, ({ data, respond }) => {
+        off()
+        resolve(data)
+      })
+
+      data._pathing = {
+        uuid,
+        src: "ui",
+        dst,
+        lastFwd: "ui",
+      }
+
+      // Send command
+      bexSend("bridge-forward", {
+        command,
+        data,
+      })
+    }
+  })
+}
 
 </script>
