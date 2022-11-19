@@ -16092,6 +16092,7 @@ Component that was made reactive: `, type);
         log("Got a query for a talent roll:", talentName);
         let talentData;
         let attributeData;
+        let tokenData;
         let talent;
         const dataRequest = bridgedMessage(
           "ui",
@@ -16105,11 +16106,14 @@ Component that was made reactive: `, type);
             return;
           talent = talentData[0].talent;
           log("got a talent:", talent);
-          attributeData = await bridgedMessage(
+          await bridgedMessage(
             "ui",
             "query-attributes",
             { filter: talent.attributes }
-          ).then((d) => d.result);
+          ).then((d) => {
+            attributeData = d.result;
+            tokenData = d.associatedToken;
+          });
           log("got attributeData:", attributeData);
         });
         const mod2 = await queryInputFromPlayer("Erschwernis (+) oder Erleichterung (-)", 0, true);
@@ -16122,7 +16126,9 @@ Component that was made reactive: `, type);
         const attr2string = `${attr2.value} [${attr2.short}]`;
         const maxValue = talent.value - mod2;
         const rollQuery = maxValue < 0 ? `[[d20cs1cf20 + ${-maxValue}[mod-TaW]]]` : "[[d20cs1cf20]]";
-        const message = `@{Kilho von Viekis Stamm|gm_roll_opt} &{template:default} {{name= ${talent.name} }} {{ TaW=  ${talent.value} }} {{ Mod= ${mod2} }} {{ TaW*= [[ { ( ${Math.max(maxValue, 0)} [TaP*] - { ${rollQuery} - ( ${attr0string} ) , 0}kh1 - { ${rollQuery} - ( ${attr1string} ) , 0}kh1 - { ${rollQuery} - ( ${attr2string} ) , 0}kh1 ) , ( ${talent.value} + 0d1) }dh1 ]] }} {{ Wurf 1= $[[0]] vs ${attr0string} }} {{ Wurf 2= $[[1]] vs ${attr1string} }} {{ Wurf 3= $[[2]] vs ${attr2string} }}`;
+        const gmRollString = tokenData.name ? `@{${tokenData.name}|gm_roll_opt} ` : "";
+        log("gmRollString", gmRollString);
+        const message = `${gmRollString}&{template:default} {{name= ${talent.name} }} {{ TaW=  ${talent.value} }} {{ Mod= ${mod2} }} {{ TaW*= [[ { ( ${Math.max(maxValue, 0)} [TaP*] - { ${rollQuery} - ( ${attr0string} ) , 0}kh1 - { ${rollQuery} - ( ${attr1string} ) , 0}kh1 - { ${rollQuery} - ( ${attr2string} ) , 0}kh1 ) , ( ${talent.value} + 0d1) }dh1 ]] }} {{ Wurf 1= $[[0]] vs ${attr0string} }} {{ Wurf 2= $[[1]] vs ${attr1string} }} {{ Wurf 3= $[[2]] vs ${attr2string} }}`;
         doChatInputAsync(message).then((msgData) => {
           log("result of the roll", msgData);
           const total = msgData.inlinerolls[3].results.total;
@@ -16140,7 +16146,7 @@ Component that was made reactive: `, type);
     }
     injectChatSendHandler(interceptSendChatMessage);
     async function interceptIncomingChatMessage(isChatMsg, msg, ...incArgs) {
-      console.log("incoming chat message:", isChatMsg, msg, ...incArgs);
+      log("incoming chat message:", isChatMsg, msg, ...incArgs);
     }
     injectChatIncomingHandler(interceptIncomingChatMessage);
     bridge2.on("send-message", ({ data }) => {
@@ -16195,11 +16201,13 @@ Component that was made reactive: `, type);
       };
       log("returning response", responseMsg);
       bridge2.send("bridge-forward", responseMsg);
+      log("response sent");
     }
     bridge2.on("query-tokens", ({ data }) => {
-      log("getting tokens");
-      const tokens = window.currentPlayer.d20.Campaign.characters.models.filter((c) => c.attributes.controlledby === window.currentPlayer.attributes.id);
-      log(tokens);
+      log("getting tokens", data);
+      let tokens = window.currentPlayer.d20.Campaign.characters.models.filter((c) => c.attributes.controlledby === window.currentPlayer.attributes.id);
+      tokens = tokens.map((t) => t.attributes);
+      bridgedResponse(data._pathing, { tokens });
     });
     const CURRENT_BRIDGE_STEP = "dom";
     bridge2.on("bridge-forward", ({ data }) => {
