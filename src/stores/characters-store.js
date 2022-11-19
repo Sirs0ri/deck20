@@ -16,6 +16,13 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
     currentCharacterKey.value = key
   }
 
+  function deleteCharacter (key) {
+    delete characters[key]
+
+    const characterKeys = Object.keys(characters)
+    setCurrentCharacter(characterKeys[0])
+  }
+
   watch(characters, () => persistDebounced())
 
   const currentCharacterKey = ref(null)
@@ -104,5 +111,6 @@ export const useCharacterStore = defineStore(STORE_NAME, () => {
     currentCharacterKey,
     setCharacter,
     setCurrentCharacter,
+    deleteCharacter,
   }
 })
