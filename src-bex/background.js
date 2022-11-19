@@ -16,7 +16,8 @@ let connectedTabs = 0
 let serverUnavailable
 
 export default bexBackground((bridge /* , allActiveConnections */) => {
-  // This runs in the background, when ever there is a bridge.
+  // This is a Service Worker. It runs in the background, when ever there is
+  // some active part of the BEX, be it th eUI or Content Script.
   // This can talk to the UI from src/
   // this can talk to content scripts inside a tab
   // This can not talk to dom.js
