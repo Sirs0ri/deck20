@@ -85,9 +85,9 @@ if (isBex) {
 const serverActive = ref(false)
 const serverAvailable = ref(true)
 bexSend("query-server-status").then(({ data }) => {
-  if (data.unavailable) serverAvailable.value = false
+  if (data == null || data.unavailable) serverAvailable.value = false
   else serverAvailable.value = true
-  serverActive.value = data.active
+  serverActive.value = data?.active || false
 })
 
 const serverStatusCallback = ({ data, respond }) => {
