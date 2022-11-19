@@ -27,63 +27,21 @@
 </template>
 
 <script setup>
-import { uid } from "quasar"
 import Calendar from "src/components/calendar/CalendarView.vue"
 import { useCalendarStore } from "src/stores/calendar-store"
 import { getFormattedDate } from "src/utils/calendar"
 import { useBridge } from "src/utils/bexBridge"
 
-const { bexSend, bexOn } = useBridge()
+const { bexSendBridged } = useBridge()
 
 const store = useCalendarStore()
 
 function sendToRoll20 (evt) {
   const sendPublicly = evt.ctrlKey
 
-  bridgedMessage("dom", "send-message", {
+  bexSendBridged("dom", "send-message", {
     msg: `Heute ist der ${getFormattedDate(store.today)}`,
     target: sendPublicly ? "" : "MYSELF",
-  })
-}
-
-async function bridgedMessage (dst, command, data = {}, timeout = -1) {
-  return new Promise((resolve, reject) => {
-    const uuid = uid()
-    let off
-
-    // Set up timeout, if necessary
-    if (timeout >= 0) {
-      setTimeout(() => {
-        off && off()
-        reject("Timeout")
-      }, timeout)
-    }
-
-    if (dst === "background") {
-      // We can talk to the background script, send the command directly
-      bexSend(command, data).then(data => {
-        resolve(data)
-      })
-    } else {
-      // Set up handler for the answer
-      off = bexOn(`bridge-response.${uuid}`, ({ data, respond }) => {
-        off()
-        resolve(data)
-      })
-
-      data._pathing = {
-        uuid,
-        src: "ui",
-        dst,
-        lastFwd: "ui",
-      }
-
-      // Send command
-      bexSend("bridge-forward", {
-        command,
-        data,
-      })
-    }
   })
 }
 </script>

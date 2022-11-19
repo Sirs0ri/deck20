@@ -41,8 +41,6 @@
 
 <script setup>
 import { ref, onBeforeUnmount, computed } from "vue"
-import { uid } from "quasar"
-// import { useQuasar } from "quasar"
 
 import { useBridge } from "src/utils/bexBridge"
 
@@ -50,6 +48,7 @@ const log = (...args) => console.log("[bex] ui", ...args)
 
 const {
   bexSend,
+  bexSendBridged,
   bexOn,
 } = useBridge()
 
@@ -92,52 +91,10 @@ onBeforeUnmount(() => {
 const rollData = ref(null)
 
 async function roll20HelloWorld () {
-  bridgedMessage("dom", "send-message", { msg: "Hello World", target: "MYSELF" })
+  bexSendBridged("dom", "send-message", { msg: "Hello World", target: "MYSELF" })
     .then(data => {
       console.log("got a response:", data)
       rollData.value = data
     })
 }
-
-async function bridgedMessage (dst, command, data = {}, timeout = -1) {
-  return new Promise((resolve, reject) => {
-    const uuid = uid()
-    let off
-
-    // Set up timeout, if necessary
-    if (timeout >= 0) {
-      setTimeout(() => {
-        off && off()
-        reject("Timeout")
-      }, timeout)
-    }
-
-    if (dst === "background") {
-      // We can talk to the background script, send the command directly
-      bexSend(command, data).then(data => {
-        resolve(data)
-      })
-    } else {
-      // Set up handler for the answer
-      off = bexOn(`bridge-response.${uuid}`, ({ data, respond }) => {
-        off()
-        resolve(data)
-      })
-
-      data._pathing = {
-        uuid,
-        src: "ui",
-        dst,
-        lastFwd: "ui",
-      }
-
-      // Send command
-      bexSend("bridge-forward", {
-        command,
-        data,
-      })
-    }
-  })
-}
-
 </script>

@@ -1,4 +1,5 @@
 import { computed, ref } from "vue"
+import { uid } from "quasar"
 
 export const isBex = process.env.MODE === "bex"
 
@@ -19,6 +20,57 @@ const bexConnected = computed(() => { return bridge.value != null })
 async function bexSend (command, data) {
   if (!bridge.value) return { data: null, respond: () => {} }
   return bridge.value.send(command, data)
+}
+
+/**
+ * Pass along a BEX command through the bridge to a destination,
+ * useful if the two communicating components can't directly talk to each other.
+ *
+ * @param {String} dst Where to send the message to, [ui, background, content, dom]
+ * @param {String} command Bex-Command to execute at the destination, eg. "send-message"
+ * @param {Object} data Data to pass alopng with the command
+ * @param {Number} timeout in ms. Reject if the command doesn't get an answer after a certain time.
+ * @returns Promise that'll resolve with the data returned by the destination in response to the command
+ */
+async function bexSendBridged (dst, command, data = {}, timeout = -1) {
+  return new Promise((resolve, reject) => {
+    const uuid = uid()
+    let off
+
+    // Set up timeout, if necessary
+    if (timeout >= 0) {
+      setTimeout(() => {
+        off && off()
+        reject("Timeout")
+      }, timeout)
+    }
+
+    if (dst === "background") {
+      // We can talk to the background script, send the command directly
+      bexSend(command, data).then(data => {
+        resolve(data)
+      })
+    } else {
+      // Set up handler for the answer
+      off = bexOn(`bridge-response.${uuid}`, ({ data, respond }) => {
+        off()
+        resolve(data)
+      })
+
+      data._pathing = {
+        uuid,
+        src: "ui",
+        dst,
+        lastFwd: "ui",
+      }
+
+      // Send command
+      bexSend("bridge-forward", {
+        command,
+        data,
+      })
+    }
+  })
 }
 /**
  * Register a command handler via BE
@@ -54,6 +106,7 @@ export function useBridge (b) {
     registerBridge,
     bexConnected,
     bexSend,
+    bexSendBridged,
     bexOn,
     bexOff,
   }
