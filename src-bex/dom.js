@@ -389,11 +389,13 @@ export default bexDom(async (bridge) => {
   }
 
   bridge.on("query-tokens", ({ data }) => {
-    log("getting tokens")
+    log("getting tokens", data)
 
-    const tokens = window.currentPlayer.d20.Campaign.characters.models.filter(c => c.attributes.controlledby === window.currentPlayer.attributes.id)
+    let tokens = window.currentPlayer.d20.Campaign.characters.models.filter(c => c.attributes.controlledby === window.currentPlayer.attributes.id)
 
-    log(tokens)
+    tokens = tokens.map(t => t.attributes)
+
+    bridgedResponse(data._pathing, { tokens })
   })
 
   // #region ========== bridge forwarding ==========

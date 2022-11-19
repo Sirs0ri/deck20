@@ -1,19 +1,275 @@
 <template>
-  <q-page class="flex column q-gutter-y-md q-pa-md">
-    <q-list class="relative-position">
-      <q-item class="text-h4 header-item q-mb-md">
-        Charaktere
-      </q-item>
+  <q-page class="flex column q-pa-md" style="max-width: 100vw;">
+    <q-item class="text-h4 header-item ">
+      Charaktere
+    </q-item>
+    <div ref="overlayContainer" class="character-content-wrapper q-mt-md">
+      <!-- #region ATTRIBUTES / TALENTS -->
+      <q-list ref="statsOverview" class="relative-position">
+        <!-- Name / Class -->
+        <template v-if="currentCharacter">
+          <q-item>
+            <q-item-section top>
+              <!-- style="min-height: 56px" -->
+              <q-item-label :lines="1">
+                {{ currentCharacter.generalData.name }}
+              </q-item-label>
+              <q-item-label caption :lines="1">
+                {{ currentCharacter.generalData.profession }}
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side top>
+              <q-btn
+                ref="editOpenBtn"
+                icon="sym_r_edit"
+                round
+                flat
+                @click="toggleEditCharacter"
+              />
+            </q-item-section>
+          </q-item>
+        </template>
 
-      <!-- Name / Class -->
-      <template v-if="currentCharacter">
+        <!-- Search -->
+        <q-item key="search" class="sticky-search">
+          <q-input
+            ref="searchBar"
+            v-model="talentSearch"
+            debounce="200"
+            clearable
+            autofocus
+            placeholder="Suche"
+            outlined
+            class="full-width bg-glassed"
+            @clear="talentSearch = ''"
+          />
+        </q-item>
+
+        <TransitionGroup name="list" tag="div">
+          <q-item
+            key="header_attributes"
+            clickable
+            class="rounded-borders bg-white sticky-heading"
+            :style="{top: stickyHeadingTop}"
+            @click="expandedAttributes = !expandedAttributes"
+          >
+            <q-item-section avatar>
+              <q-avatar>
+                <q-icon
+                  size="24px"
+                  name="sym_r_account_circle"
+                  color="primary"
+                  class="icon-md-filled"
+                />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section class="text-bold">
+              Eigenschaften
+            </q-item-section>
+            <q-item-section side>
+              <q-icon
+                name="sym_r_expand_more"
+                :class="{'rotate-180': expandedAttributes}"
+                style="transition: transform 100ms"
+              />
+            </q-item-section>
+          </q-item>
+
+          <q-item
+            v-for="(attr) in expandedAttributes ? currentCharacter?.attributes : []"
+            :key="`attr_${attr.short}`"
+            dense
+            class="rounded-borders"
+          >
+            <q-item-section avatar />
+            <q-item-section class="col">
+              {{ attr.name }}:
+            </q-item-section>
+            <q-item-section class="col-auto text-right q-pr-md">
+              {{ attr.value }}
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                dense
+                flat
+                round
+                icon="mdi-dice-d20"
+                @click="roll(attr)"
+              />
+            </q-item-section>
+          </q-item>
+        </TransitionGroup>
+
+        <TransitionGroup
+          v-for="group in talentGroups"
+          :key="`talents_${group.name}`"
+          name="list"
+          tag="div"
+        >
+          <q-item
+            :key="`header_${group.name}`"
+            clickable
+            class="rounded-borders bg-white sticky-heading"
+            :style="{top: stickyHeadingTop}"
+            @click="expandedGroups[group.name] = !expandedGroups[group.name]"
+          >
+            <q-item-section avatar>
+              <q-avatar>
+                <q-icon
+                  size="24px"
+                  :name="group.icon"
+                  color="grey-8"
+                />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section class="text-bold">
+              {{ group.name }}
+            </q-item-section>
+            <q-item-section side>
+              <q-icon
+                name="sym_r_expand_more"
+                :class="{'rotate-180': expandedGroups[group.name]}"
+                style="transition: transform 100ms"
+              />
+            </q-item-section>
+          </q-item>
+
+          <q-item
+            v-for="(talent) in getItems(group.name)"
+            :key="`talent_${talent.name}`"
+            dense
+          >
+            <q-item-section avatar>
+              <q-avatar>
+                <q-icon
+                  name="sym_r_favorite"
+                  size="24px"
+                  class="talent-fav-icon cursor-pointer"
+                  :class="{'icon-md-filled favorite': isFav(talent.name)}"
+                  color="primary"
+                  @click="toggleFav(talent.name)"
+                />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section class="col">
+              {{ talent.name }}
+              {{ talent.specializations?.length ? '*' : '' }}
+              {{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}{{ talent.value != null ? ':' : '' }}
+            </q-item-section>
+            <q-item-section class="col-auto text-right q-pr-md">
+              {{ talent.value }}
+            </q-item-section>
+
+            <q-item-section side>
+              <q-btn
+                v-if="talent.extraRolls && Object.keys(talent.extraRolls).length"
+                dense
+                flat
+                round
+                icon="mdi-dice-d20"
+              >
+                <q-menu
+                  auto-close
+                  anchor="top right"
+                  self="top right"
+                >
+                  <q-list style="min-width: 100px">
+                    <q-item
+                      clickable
+                      @click="roll(talent)"
+                    >
+                      <q-item-section>
+                        {{ talent.name }}:
+                      </q-item-section>
+                      <q-item-section side class="text-primary">
+                        {{ talent.value ?? 'n.a.' }}
+                      </q-item-section>
+                    </q-item>
+                    <q-item
+                      v-for="(value, extraRoll) in talent.extraRolls"
+                      :key="extraRoll"
+                      clickable
+                      @click="roll({...talent, name: `${talent.name} ${extraRoll}`, value, attributes: undefined})"
+                    >
+                      <q-item-section>
+                        {{ extraRoll }}:
+                      </q-item-section>
+                      <q-item-section side class="text-primary">
+                        {{ value ?? 'n.a.' }}
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+              <q-btn
+                v-else
+                dense
+                flat
+                round
+                icon="mdi-dice-d20"
+                :disable="talent.value == null"
+                @click="roll(talent)"
+              />
+            </q-item-section>
+          </q-item>
+        </TransitionGroup>
+
+        <q-separator key="spacer" />
+
+        <q-item
+          key="show_inactive"
+          clickable
+          @click="showInactiveTalents = !showInactiveTalents"
+        >
+          <q-item-section side>
+            <q-toggle
+              v-model="showInactiveTalents"
+              checked-icon="sym_r_check"
+              style="margin: -0.5em -0.6em -0.5em -0.6em;"
+            />
+          </q-item-section>
+          <q-item-section>
+            Inaktive Talente anzeigen?
+          </q-item-section>
+        </q-item>
+      </q-list>
+      <!-- #endregion -->
+
+      <!-- #region EDIT MODE -->
+      <q-list
+        v-if="currentCharacter"
+        ref="editOverlay"
+        class="char-edit-list"
+        style="--negative-margin: -58px"
+      >
         <q-item>
-          <q-item-section v-if="editingCharacter">
+          <q-item-section top>
+            <q-item-label :lines="1">
+              {{ currentCharacter.generalData.name }}
+            </q-item-label>
+            <q-item-label caption :lines="1">
+              {{ currentCharacter.generalData.profession }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side top>
+            <q-btn
+              ref="editCloseBtn"
+              icon="sym_r_task_alt"
+              color="primary"
+              round
+              flat
+              @click="toggleEditCharacter"
+            />
+          </q-item-section>
+        </q-item>
+
+        <q-item>
+          <q-item-section>
             <q-input
               v-model="currentCharacter.generalData.name"
               debounce="200"
               autofocus
-              placeholder="Suche"
+              label="Name"
               outlined
               class="full-width bg-glassed"
               clearable
@@ -22,234 +278,99 @@
               @keyup.enter.ctrl="toggleEditCharacter"
             />
           </q-item-section>
-          <q-item-section
-            v-else
-            top
-            style="min-height: 56px"
+        </q-item>
+
+        <q-item-label header>
+          Verknüpftes Token
+        </q-item-label>
+
+        <TransitionGroup name="list">
+          <q-item
+            v-for="t in availableTokens"
+            :key="t.id"
+            v-ripple
+            tag="label"
+            class="rounded-borders"
+            @click.prevent="onTokenItemClick(t.id)"
           >
-            <q-item-label>
-              {{ currentCharacter.generalData.name }}
-            </q-item-label>
-            <q-item-label caption>
-              {{ currentCharacter.generalData.profession }}
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <Transition name="fadeScale">
-              <q-btn
-                v-if="editingCharacter"
-                icon="sym_r_task_alt"
+            <q-item-section avatar>
+              <q-avatar
+                :icon="t.avatar ? undefined : 'sym_r_question_mark'"
                 color="primary"
-                round
-                flat
-                @click="toggleEditCharacter"
-              />
-              <q-btn
-                v-else
-                icon="sym_r_edit"
-                round
-                flat
-                @click="toggleEditCharacter"
-              />
-            </Transition>
-          </q-item-section>
-        </q-item>
-      </template>
-
-      <!-- Search -->
-      <q-item key="search" class="sticky-search">
-        <q-input
-          ref="searchBar"
-          v-model="talentSearch"
-          debounce="200"
-          clearable
-          autofocus
-          placeholder="Suche"
-          outlined
-          class="full-width bg-glassed"
-          @clear="talentSearch = ''"
-        />
-      </q-item>
-
-      <TransitionGroup name="list" tag="div">
-        <q-item
-          key="header_attributes"
-          clickable
-          class="rounded-borders bg-white sticky-heading"
-          :style="{top: stickyHeadingTop}"
-          @click="expandedAttributes = !expandedAttributes"
-        >
-          <q-item-section avatar>
-            <q-icon
-              name="sym_r_account_circle"
-              color="primary"
-              class="icon-md-filled"
-            />
-          </q-item-section>
-          <q-item-section class="text-bold">
-            Eigenschaften
-          </q-item-section>
-          <q-item-section side>
-            <q-icon
-              name="sym_r_expand_more"
-              :class="{'rotate-180': expandedAttributes}"
-              style="transition: transform 100ms"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          v-for="(attr) in expandedAttributes ? currentCharacter?.attributes : []"
-          :key="`attr_${attr.short}`"
-          dense
-          class="rounded-borders"
-        >
-          <q-item-section avatar />
-          <q-item-section class="col">
-            {{ attr.name }}:
-          </q-item-section>
-          <q-item-section class="col-auto text-right q-pr-md">
-            {{ attr.value }}
-          </q-item-section>
-          <q-item-section side>
-            <q-btn
-              dense
-              flat
-              round
-              icon="mdi-dice-d20"
-              @click="roll(attr)"
-            />
-          </q-item-section>
-        </q-item>
-      </TransitionGroup>
-
-      <TransitionGroup
-        v-for="group in talentGroups"
-        :key="`talents_${group.name}`"
-        name="list"
-        tag="div"
-      >
-        <q-item
-          :key="`header_${group.name}`"
-          clickable
-          class="rounded-borders bg-white sticky-heading"
-          :style="{top: stickyHeadingTop}"
-          @click="expandedGroups[group.name] = !expandedGroups[group.name]"
-        >
-          <q-item-section avatar>
-            <q-icon :name="group.icon" color="grey-8" />
-          </q-item-section>
-          <q-item-section class="text-bold">
-            {{ group.name }}
-          </q-item-section>
-          <q-item-section side>
-            <q-icon
-              name="sym_r_expand_more"
-              :class="{'rotate-180': expandedGroups[group.name]}"
-              style="transition: transform 100ms"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          v-for="(talent) in getItems(group.name)"
-          :key="`talent_${talent.name}`"
-          dense
-        >
-          <q-item-section avatar>
-            <q-icon
-              name="sym_r_favorite"
-              class="talent-fav-icon cursor-pointer"
-              :class="{'icon-md-filled favorite': isFav(talent.name)}"
-              color="primary"
-              @click="toggleFav(talent.name)"
-            />
-          </q-item-section>
-          <q-item-section class="col">
-            {{ talent.name }}
-            {{ talent.specializations?.length ? '*' : '' }}
-            {{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}{{ talent.value != null ? ':' : '' }}
-          </q-item-section>
-          <q-item-section class="col-auto text-right q-pr-md">
-            {{ talent.value }}
-          </q-item-section>
-
-          <q-item-section side>
-            <q-btn
-              v-if="talent.extraRolls && Object.keys(talent.extraRolls).length"
-              dense
-              flat
-              round
-              icon="mdi-dice-d20"
-            >
-              <q-menu
-                auto-close
-                anchor="top right"
-                self="top right"
+                text-color="white"
               >
-                <q-list style="min-width: 100px">
-                  <q-item
-                    clickable
-                    @click="roll(talent)"
-                  >
-                    <q-item-section>
-                      {{ talent.name }}:
-                    </q-item-section>
-                    <q-item-section side class="text-primary">
-                      {{ talent.value ?? 'n.a.' }}
-                    </q-item-section>
-                  </q-item>
-                  <q-item
-                    v-for="(value, extraRoll) in talent.extraRolls"
-                    :key="extraRoll"
-                    clickable
-                    @click="roll({...talent, name: `${talent.name} ${extraRoll}`, value, attributes: undefined})"
-                  >
-                    <q-item-section>
-                      {{ extraRoll }}:
-                    </q-item-section>
-                    <q-item-section side class="text-primary">
-                      {{ value ?? 'n.a.' }}
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-btn>
+                <q-img v-if="t.avatar" :src="t.avatar" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>{{ t.name || "Kein verknüpftes Token" }}</q-item-section>
+            <q-item-section v-if="availableTokens.length > 1" side>
+              <q-radio
+                v-model="selectedToken"
+                :val="t.id"
+                size="42px"
+              />
+            </q-item-section>
+            <q-item-section v-else side>
+              <q-btn
+                round
+                flat
+                icon="sym_r_search"
+                class="pointer-none"
+                :loading="loadingTokens"
+              />
+            </q-item-section>
+          </q-item>
+          <q-item v-if="roll20Unavailable" key="connection_error">
+            <q-item-section avatar>
+              <q-avatar>
+                <q-icon name="sym_r_link_off" color="warning" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>
+                Roll20 ist nicht erreichbar
+              </q-item-label>
+              <q-item-label caption>
+                Bitte öffne einen Tab mit der Kampagne aus der Du einen Charakter verknüpfen willst, und versuche es erneut.
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+        </TransitionGroup>
+
+        <q-item-label header>
+          Sonstiges
+        </q-item-label>
+
+        <q-item v-ripple tag="label">
+          <q-item-section avatar>
+            <q-avatar icon="sym_r_delete" text-color="negative" />
+          </q-item-section>
+          <q-item-section>
+            Charakter löschen
+          </q-item-section>
+          <q-item-section side>
+            <q-checkbox v-model="deleteEnabled" color="grey-8" />
+          </q-item-section>
+        </q-item>
+        <q-item>
+          <q-item-section class="content-center">
             <q-btn
-              v-else
-              dense
+              color="negative"
               flat
-              round
-              icon="mdi-dice-d20"
-              :disable="talent.value == null"
-              @click="roll(talent)"
+              rounded
+              label="Löschen bestätigen"
+              :style="deleteEnabled ? '' : 'scale: 0.9; opacity: 0; pointer-events: none;'"
+              class="delete-character-btn"
+              @click="deleteCharacter"
             />
           </q-item-section>
         </q-item>
-      </TransitionGroup>
-
-      <q-separator key="spacer" />
-
-      <q-item
-        key="show_inactive"
-        clickable
-        @click="showInactiveTalents = !showInactiveTalents"
-      >
-        <q-item-section side>
-          <q-toggle
-            v-model="showInactiveTalents"
-            checked-icon="sym_r_check"
-            style="margin: -0.5em -0.2em -0.5em -1em;"
-          />
-        </q-item-section>
-        <q-item-section>
-          Inaktive Talente anzeigen?
-        </q-item-section>
-      </q-item>
-    </q-list>
+      </q-list>
+      <!-- #endregion -->
+    </div>
 
     <!-- FAB -->
-    <div class="sticky-fab">
+    <div class="sticky-fab" :style="editingCharacter ? 'scale: 0.9; opacity: 0; pointer-events: none;': ''">
       <q-fab
         ref="fab"
         square
@@ -296,29 +417,121 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from "vue"
+import {
+  ref,
+  unref,
+  reactive,
+  toRaw,
+  computed,
+  watch,
+  nextTick,
+} from "vue"
 import { storeToRefs } from "pinia"
+import { scroll } from "quasar"
 
 import { useCharacterStore } from "src/stores/characters-store"
 
+import { sleep } from "src/utils/helpers"
 import { readFile, parseXML } from "src/utils/fileUtils"
-import {
-  parseCharacter,
-  talentGroups,
-} from "src/utils/characterSheet"
+import { parseCharacter, talentGroups } from "src/utils/characterSheet"
+import { useBridge } from "src/utils/bexBridge"
+
+/** Wrapper for console.log that adds a "[bex] dom" prefix infront of the logged message
+ *
+ * @param  {...any} args
+ */
+const log = (...args) => {
+  if (process.env.DEBUGGING) { console.log("[ui] CharactersPage:", ...args) }
+}
+
+const { getScrollTarget, setVerticalScrollPosition } = scroll
+const { bexSendBridged } = useBridge()
 
 const store = useCharacterStore()
 const { currentCharacter, characters } = storeToRefs(store)
 
 // #region ========== UI ==========
 
+const overlayContainer = ref(null) // div
+const statsOverview = ref(null) // q-list
+const editOverlay = ref(null) // q-list
+const editOpenBtn = ref(null) // q-btn
+const editCloseBtn = ref(null) // q-btn
 const editingCharacter = ref(false)
 const characterNameBackup = ref("")
-function toggleEditCharacter () {
-  if (!editingCharacter.value) {
-    characterNameBackup.value = currentCharacter.value.generalData.name
-  }
+
+watch(currentCharacter, () => {
+  // Let the UI refresh so that the editBtn gets drawn, then set the default
+  // X/Y coordinates for the character edit popup
+  nextTick(() => {
+    if (!currentCharacter.value) return
+    const animX = editOpenBtn.value.$el.offsetLeft + (0.5 * editOpenBtn.value.$el.offsetWidth)
+    const animY = editOpenBtn.value.$el.offsetTop + (0.5 * editOpenBtn.value.$el.offsetHeight)
+
+    editOverlay.value.$el.style.setProperty("transition", "none")
+    editOverlay.value.$el.style.setProperty("--x", animX + "px")
+    editOverlay.value.$el.style.setProperty("--y", animY + "px")
+  })
+})
+
+function toggleEditCharacter (clickEvt) {
+  let animX, animY
+  let newBtn
   editingCharacter.value = !editingCharacter.value
+  roll20Unavailable.value = false
+
+  if (editingCharacter.value) { // switching to edit mode
+    newBtn = editCloseBtn.value.$el
+    characterNameBackup.value = currentCharacter.value.generalData.name
+
+    const scrollTarget = getScrollTarget(overlayContainer.value)
+    setVerticalScrollPosition(scrollTarget, 0, 100)
+  } else { // switching from edit mode
+    newBtn = editOpenBtn.value.$el
+  }
+
+  if (clickEvt instanceof PointerEvent) {
+    // overlayContainer is a div, so .value has the HTML element
+    const { offsetLeft, offsetTop } = overlayContainer.value
+    animX = clickEvt.pageX - offsetLeft
+    animY = clickEvt.pageY - offsetTop
+  } else {
+    animX = newBtn.offsetLeft + (0.5 * newBtn.offsetWidth)
+    animY = newBtn.offsetTop + (0.5 * newBtn.offsetHeight)
+  }
+
+  // editOverlay is a quasar element, so we need .$el
+  // disable transitions so that the change of x/y doesn't animate
+  editOverlay.value.$el.style.setProperty("transition", undefined)
+  editOverlay.value.$el.style.setProperty("--x", animX + "px")
+  editOverlay.value.$el.style.setProperty("--y", animY + "px")
+  statsOverview.value.$el.classList.remove("hidden")
+
+  if (editingCharacter.value) {
+    const animHandler = () => {
+      editOverlay.value.$el.removeEventListener("transitionend", animHandler)
+      statsOverview.value.$el.classList.add("hidden")
+    }
+
+    editOverlay.value.$el.addEventListener("transitionend", animHandler)
+    editOverlay.value.$el.style.setProperty("--max-heigt", editOverlay.value.$el.offsetHeight)
+  }
+
+  nextTick(() => {
+    if (!editOverlay.value) return
+    // anable transitions so that the change of the % does animate
+    editOverlay.value.$el.style.setProperty("transition", "clip-path 300ms ease")
+
+    const newAnimPercent = editingCharacter.value ? "calc(100vh + 100vw)" : "0%"
+    editOverlay.value.$el.style.setProperty("--opening-percentage", newAnimPercent)
+    newBtn.focus()
+
+    const onMouseLeave = () => {
+      newBtn.blur()
+      newBtn.removeEventListener("mouseleave", onMouseLeave)
+    }
+    newBtn.addEventListener("mouseleave", onMouseLeave)
+  })
 }
 
 const characterLoaded = computed(() => currentCharacter.value != null)
@@ -409,14 +622,26 @@ function pickCharacterFile (evt) {
 }
 
 async function parseImportedFile (newFile) {
-  // console.log("parsing new charactersheet...")
-
   const doc = await readFile(newFile)
     .then(content => parseXML(content))
 
   const character = parseCharacter(doc)
 
   store.setCharacter(character.generalData.key, character)
+}
+
+const deleteEnabled = ref(false)
+function deleteCharacter () {
+  if (!deleteEnabled.value) return
+
+  if (!currentCharacter) return
+
+  log("deleting character", currentCharacter.value.generalData.key)
+
+  store.deleteCharacter(currentCharacter.value.generalData.key)
+
+  deleteEnabled.value = false
+  toggleEditCharacter()
 }
 // #endregion
 
@@ -429,16 +654,111 @@ function roll (props) {
     attributes = undefined,
   } = props
 
+  // This is a talent
   if (attributes) {
-    console.log("Rolling", name, "vs", value, `(${attributes})`)
+    bexSendBridged("dom", "send-message", { msg: `/t ${name}` })
     return
   }
-  console.log("Rolling", name, "vs", value)
+  // TODO: Roll attributes
+  log("Rolling", name, "vs", value)
+}
+
+// #endregion
+
+// #region ========== TOKEN LINKING ==========
+
+const loadingTokens = ref(false)
+const availableTokens = ref([])
+const defaultToken = {
+  name: "",
+  id: "",
+}
+const roll20Unavailable = ref(false)
+
+// Set up default
+availableTokens.value.push(defaultToken)
+
+// Override default if the currentCharacter has a token
+store.restoration.then(() => { updateTokenSelectionFromCurrentCharacter() })
+watch(currentCharacter, () => { updateTokenSelectionFromCurrentCharacter() })
+
+function updateTokenSelectionFromCurrentCharacter () {
+  const charToken = toRaw(currentCharacter?.value?.associatedToken)
+  if (!charToken) return
+  availableTokens.value = [charToken]
+}
+
+const selectedToken = computed({
+  get: () => currentCharacter?.value?.associatedToken?.id ?? "",
+  set: (newId) => {
+    log("Setting new token:", newId)
+    let newToken = availableTokens.value.find(t => t.id === newId)
+    newToken = unref(newToken)
+    currentCharacter.value.associatedToken = newToken
+
+    availableTokens.value = [newToken]
+  },
+
+})
+async function queryTokens () {
+  log("searching...")
+  roll20Unavailable.value = false
+  loadingTokens.value = true
+
+  const s = sleep(500)
+  const tokens = await bexSendBridged("dom", "query-tokens", {}, 2000)
+    .then(data => data.tokens)
+    .catch(() => { /* console.warn("request timed out") */ })
+
+  log(tokens)
+
+  if (!tokens) {
+    roll20Unavailable.value = true
+    loadingTokens.value = false
+    return
+  }
+
+  availableTokens.value = [...tokens, defaultToken]
+
+  // wait for at least 500ms before the loading spinner gets removed
+  await s
+  loadingTokens.value = false
+}
+
+function onTokenItemClick (id) {
+  // User just selected a token
+  if (id !== selectedToken.value) {
+    selectedToken.value = id
+    return
+  }
+
+  // user clicked the token to start search
+  if (availableTokens.value.length === 1) {
+    queryTokens()
+    return
+  }
+
+  const charToken = toRaw(currentCharacter?.value?.associatedToken)
+
+  if (!charToken) {
+    availableTokens.value = [defaultToken]
+    return
+  }
+  availableTokens.value = [charToken]
 }
 // #endregion
 </script>
 
 <style lang="scss">
+.hidden {
+  position: absolute;
+  height: var(--max-heigt, 0px);
+  overflow: hidden;
+}
+.character-content-wrapper {
+  position: relative;
+  max-width: 100%;
+}
 .sticky-search {
   position: sticky;
   top: 0;
@@ -457,6 +777,14 @@ function roll (props) {
   // Remove the transform applied with an active footer, don't need it since the
   // parent will not extend below the footer due to scrolling parent in Layout!
   transform: none !important;
+}
+
+.sticky-fab,
+.delete-character-btn {
+  scale: 1;
+  opacity: 1;
+
+  transition: scale 200ms, opacity 170ms;
 }
 
 .q-item {
@@ -489,6 +817,16 @@ function roll (props) {
   }
 }
 
+.char-edit-list {
+  position: absolute;
+  inset: 0;
+  background: white;
+  z-index: 3;
+  /* pointer-events: none; */
+
+  clip-path: circle(var(--opening-percentage, 0%) at var(--x, 0) var(--y, 0));
+}
+
 /* list-... maps to the name attribute of the TransitionGroup above */
 .list-move, /* apply transition to moving elements */
 .list-leave-active {
@@ -502,7 +840,7 @@ function roll (props) {
 .list-leave-to {
   opacity: 0;
   /* Negative margin should be approx. as big as the element is high */
-  margin-top: -37px;
+  margin-top: var(--negative-margin, -37px);
 }
 
 </style>
