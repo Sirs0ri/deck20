@@ -30,28 +30,6 @@
         />
       </q-tabs>
     </q-footer>
-
-    <!-- <div
-      v-if="!$q.screen.gt.xs"
-      class="nav-handle"
-    >
-      <q-tabs
-        class="text-white"
-        no-caps
-        narrow-indicator
-        switch-indicator
-      >
-        <q-route-tab
-          v-for="link in essentialLinks"
-          :key="link.title"
-          :icon="link.icon"
-          :to="link.link"
-          :class="link.class"
-          :alert="link.alert ?? false"
-          exact
-        />
-      </q-tabs>
-    </div> -->
   </q-layout>
 </template>
 
