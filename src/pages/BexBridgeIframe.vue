@@ -115,6 +115,7 @@ bexOn("query-attributes", async ({ data }) => {
         value: a.name,
         attribute: a,
       })),
+      associatedToken: currentCharacter.value.associatedToken,
       _pathing: {
         uuid,
         src: "ui",

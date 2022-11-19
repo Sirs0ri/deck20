@@ -233,6 +233,8 @@ export default bexDom(async (bridge) => {
 
   async function interceptSendChatMessage (msg, origin, callbackId, arg4) {
     log("new outgoing message:", `"${msg}" via "${origin}".`, "extra args:", callbackId, arg4)
+
+    // Talent rolls
     if (msg.startsWith("/t ")) {
       const talentName = msg.substring(2).toLowerCase().trim()
       log("Got a query for a talent roll:", talentName)
@@ -240,6 +242,7 @@ export default bexDom(async (bridge) => {
       // set up promises
       let talentData
       let attributeData
+      let tokenData
       let talent
       const dataRequest = bridgedMessage(
         "ui",
@@ -255,12 +258,15 @@ export default bexDom(async (bridge) => {
           talent = talentData[0].talent
           log("got a talent:", talent)
 
-          attributeData = await bridgedMessage(
+          await bridgedMessage(
             "ui",
             "query-attributes",
             { filter: talent.attributes },
           )
-            .then(d => d.result)
+            .then(d => {
+              attributeData = d.result
+              tokenData = d.associatedToken
+            })
 
           log("got attributeData:", attributeData)
         })
@@ -282,10 +288,9 @@ export default bexDom(async (bridge) => {
       const maxValue = talent.value - mod
       const rollQuery = (maxValue < 0) ? `[[d20cs1cf20 + ${-maxValue}[mod-TaW]]]` : "[[d20cs1cf20]]"
 
-      // TODO: gm roll state? Shouldn't be hard-coded...
-      // Get character info from linked character?
-      const message = `@{Kilho von Viekis Stamm|gm_roll_opt} \
-&{template:default} \
+      const gmRollString = tokenData.name ? `@{${tokenData.name}|gm_roll_opt} ` : ""
+      log("gmRollString", gmRollString)
+      const message = `${gmRollString}&{template:default} \
 {{name= ${talent.name} }} \
 {{ TaW=  ${talent.value} }} \
 {{ Mod= ${mod} }} \
@@ -320,7 +325,7 @@ export default bexDom(async (bridge) => {
   injectChatSendHandler(interceptSendChatMessage)
 
   async function interceptIncomingChatMessage (isChatMsg, msg, ...incArgs) {
-    console.log("incoming chat message:", isChatMsg, msg, ...incArgs)
+    log("incoming chat message:", isChatMsg, msg, ...incArgs)
   }
   injectChatIncomingHandler(interceptIncomingChatMessage)
 
@@ -386,6 +391,7 @@ export default bexDom(async (bridge) => {
     }
     log("returning response", responseMsg)
     bridge.send("bridge-forward", responseMsg)
+    log("response sent")
   }
 
   bridge.on("query-tokens", ({ data }) => {
