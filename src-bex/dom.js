@@ -290,6 +290,8 @@ export default bexDom(async (bridge) => {
 
       const gmRollString = tokenData.name ? `@{${tokenData.name}|gm_roll_opt} ` : ""
       log("gmRollString", gmRollString)
+
+      // TODO: remove the "dh1", can't get more TaP through good rolls!
       const message = `${gmRollString}&{template:default} \
 {{name= ${talent.name} }} \
 {{ TaW=  ${talent.value} }} \
