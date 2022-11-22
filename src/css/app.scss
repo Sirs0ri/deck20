@@ -28,6 +28,16 @@ html, body, #q-app, .q-layout, .q-page-container {
   background: rgba(white, 0.8);
 }
 
+.q-timeline__entry {
+
+  &.no-subtitle .q-timeline__subtitle{
+    display: none;
+  }
+  &.no-title .q-timeline__title{
+    display: none;
+  }
+}
+
 /* For exceptions, put them in a container with this class: */
 .icon-md-filled.material-symbols-rounded,
 .icon-md-filled .material-symbols-rounded {
