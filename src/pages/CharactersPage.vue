@@ -271,7 +271,7 @@
               autofocus
               label="Name"
               outlined
-              class="full-width bg-glassed"
+              class="full-width"
               clearable
               clear-icon="sym_r_undo"
               @clear="currentCharacter.generalData.name = characterNameBackup"
@@ -507,22 +507,26 @@ function toggleEditCharacter (clickEvt) {
   editOverlay.value.$el.style.setProperty("--y", animY + "px")
   statsOverview.value.$el.classList.remove("hidden")
 
-  if (editingCharacter.value) {
-    const animHandler = () => {
-      editOverlay.value.$el.removeEventListener("transitionend", animHandler)
-      statsOverview.value.$el.classList.add("hidden")
-    }
-
-    editOverlay.value.$el.addEventListener("transitionend", animHandler)
-    editOverlay.value.$el.style.setProperty("--max-heigt", editOverlay.value.$el.offsetHeight)
-  }
-
+  // Wait for the dom to update, then:
   nextTick(() => {
     if (!editOverlay.value) return
-    // anable transitions so that the change of the % does animate
-    editOverlay.value.$el.style.setProperty("transition", "clip-path 300ms ease")
+    // re-enable transitions so that the change of the % does animate
+    editOverlay.value.$el.style.setProperty("transition", "clip-path 400ms ease")
 
-    const newAnimPercent = editingCharacter.value ? "calc(100vh + 100vw)" : "0%"
+    if (editingCharacter.value) {
+      const animHandler = (transitionEvt) => {
+        // Transition Events bubble, make sure we react to the right one
+        if (transitionEvt.srcElement !== editOverlay.value.$el) return
+
+        editOverlay.value.$el.removeEventListener("transitionend", animHandler)
+        statsOverview.value.$el.classList.add("hidden")
+      }
+
+      editOverlay.value.$el.addEventListener("transitionend", animHandler)
+      editOverlay.value.$el.style.setProperty("--max-heigt", editOverlay.value.$el.offsetHeight)
+    }
+
+    const newAnimPercent = editingCharacter.value ? "200vmax" : "0%"
     editOverlay.value.$el.style.setProperty("--opening-percentage", newAnimPercent)
     newBtn.focus()
 
@@ -773,7 +777,7 @@ function onTokenItemClick (id) {
   bottom: 18px;
   right: 32px;
 
-  z-index: 2;
+  z-index: 3;
   // Remove the transform applied with an active footer, don't need it since the
   // parent will not extend below the footer due to scrolling parent in Layout!
   transform: none !important;
