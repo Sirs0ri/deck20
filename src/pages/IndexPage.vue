@@ -15,35 +15,44 @@
           @click="writeDb()"
         />
       </q-item>
-      <q-infinite-scroll @load="(_, done) =>loadMoreItems(false, done)">
-        <template #loading>
-          <div class="row justify-center q-my-md">
-            <q-spinner
-              color="primary"
-              name="dots"
-              size="40px"
-            />
-          </div>
-        </template>
 
-        <q-item v-for="item in items" :key="item.msgData.id">
-          <q-item-section>
-            <q-item-label>
-              {{ item.msgData.id }} {{ item.msgData.realtimestamp }}
-            </q-item-label>
-            <q-item-label caption>
-              {{ new Date(item.msgData.realtimestamp) }}
-            </q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item-label
-          v-if="!moreItemsAvailable"
-          caption
-          class="text-center q-mb-lg q-mt-md"
-        >
-          Du bist am Ende der Liste angekommen!
-        </q-item-label>
-      </q-infinite-scroll>
+      <q-timeline color="primary">
+        <q-infinite-scroll @load="(_, done) =>loadMoreItems(false, done)">
+          <template #loading>
+            <div class="row justify-center q-my-md">
+              <q-spinner
+                color="primary"
+                name="dots"
+                size="40px"
+              />
+            </div>
+          </template>
+
+          <q-timeline-entry
+            v-for="item in items"
+            :key="item.msgData.id"
+            side="left"
+            class="no-title no-subtitle"
+          >
+            <q-expansion-item
+              :label="`${item.msgData.id} ${item.msgData.realtimestamp}`"
+              :caption="`${new Date(item.msgData.realtimestamp)}`"
+              header-class="rounded-borders"
+            >
+              <div>
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+              </div>
+            </q-expansion-item>
+          </q-timeline-entry>
+        </q-infinite-scroll>
+      </q-timeline>
+      <q-item-label
+        v-if="!moreItemsAvailable"
+        caption
+        class="text-center q-mb-lg q-mt-md"
+      >
+        Du bist am Ende der Liste angekommen!
+      </q-item-label>
     </q-list>
 
     <!-- FAB -->
@@ -59,7 +68,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref/* , onMounted */ } from "vue"
+import { onBeforeUnmount, onMounted, ref } from "vue"
 import { scroll, uid } from "quasar"
 
 import { dbPromise } from "src/boot/idb"
@@ -225,7 +234,7 @@ async function writeDb () {
 
 // #endregion
 
-// #region ========== Scroll Handling ==========
+// #region ========== Scroll-To-Top Handling ==========
 
 const { getScrollTarget, setVerticalScrollPosition } = scroll
 

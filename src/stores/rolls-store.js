@@ -12,6 +12,7 @@ export const useRollsStore = defineStore(STORE_NAME, () => {
   const uid = getUid()
 
   function addRoll (data, key) {
+    // TODO: Add to IDB, not the store - then notify anyone who's listening.
     rolls[key] = data
   }
 
