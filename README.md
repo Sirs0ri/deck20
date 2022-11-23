@@ -8,7 +8,7 @@ This extension is a side-project, developed when I have some free time. Use at y
 
 ## Usage
 
-Grab the [zipped extension](https://github.com/Sirs0ri/deck20/blob/release/bex/Packaged.deck20.zip) from the release/bex branch, or download that branch itself.
+Grab the [zipped extension](https://github.com/Sirs0ri/deck20/releases/download/latest/Packaged.deck20.zip) from the latest release.
 
 Install it as an "unpacked extension". A guide on how to do that in chrome can be found [here](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
 
