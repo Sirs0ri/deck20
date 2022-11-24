@@ -783,8 +783,8 @@ function onTokenItemClick (id) {
 }
 .sticky-fab {
   position: fixed;
-  bottom: 18px;
-  right: 32px;
+  bottom: 12px;
+  right: 30px;
 
   z-index: 3;
   // Remove the transform applied with an active footer, don't need it since the
@@ -802,7 +802,8 @@ function onTokenItemClick (id) {
   }
   &>.q-btn {
     border-radius: 0;
-    outline: solid red;
+    padding: 16px 8px;
+    min-width: 48px;
   }
   &:before, &:after {
     content: "";
