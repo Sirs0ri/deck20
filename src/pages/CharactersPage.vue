@@ -372,13 +372,22 @@
     <!-- FAB -->
     <div class="sticky-fab" :style="editingCharacter ? 'scale: 0.9; opacity: 0; pointer-events: none;': ''">
       <q-fab
+        id="papers-fab"
         ref="fab"
         square
         vertical-actions-align="right"
-        :icon="characterLoaded ? 'sym_r_sync': 'sym_r_file_upload'"
         direction="up"
+        text-color="white"
         @click="handleFabClick"
       >
+        <template #icon>
+          <q-icon color="primary" :name="characterLoaded ? 'sym_r_sync': 'sym_r_file_upload'" />
+        </template>
+
+        <template #active-icon>
+          <q-icon color="primary" name="sym_r_close" />
+        </template>
+
         <q-fab-action
           v-for="(c, key) in characters"
           :key="`character_switcher_${key}`"
@@ -781,6 +790,48 @@ function onTokenItemClick (id) {
   // Remove the transform applied with an active footer, don't need it since the
   // parent will not extend below the footer due to scrolling parent in Layout!
   transform: none !important;
+}
+
+#papers-fab {
+  /* https://css-tricks.com/snippets/css/stack-of-paper/ */
+
+  &.q-fab {
+    padding: 3px;
+    position: relative;
+    aspect-ratio: 0.8;
+  }
+  &>.q-btn {
+    border-radius: 0;
+    outline: solid red;
+  }
+  &:before, &:after {
+    content: "";
+    position: absolute;
+    height: 95%;
+    width: 95%;
+    background-color: #E5F5FA;
+    box-shadow: 1px 1px 1px rgb(0 0 0 / 20%);
+    transition: transform 200ms;
+    transform-origin: 50% 70%;
+  }
+  &::before {
+    z-index: -1;
+    right: 2px;
+    top: 4px;
+    transform: rotate(-3deg);
+  }
+  &.q-fab--opened::before {
+    transform: rotate(-9deg);
+  }
+  &::after {
+    top: 0px;
+    right: 1px;
+    transform: rotate(4deg);
+    z-index: -2;
+  }
+  &.q-fab--opened::after {
+    transform: rotate(9deg);
+  }
 }
 
 .sticky-fab,
