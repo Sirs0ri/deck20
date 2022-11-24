@@ -1,86 +1,32 @@
-import { ref, unref, watch, reactive } from "vue"
+import { ref } from "vue"
 import { defineStore } from "pinia"
 import { uid as getUid } from "quasar"
 
-import { isBex, useBridge } from "src/utils/bexBridge"
+import { dbPromise } from "src/boot/idb"
+import { TABLE_NAME_ROLLS } from "src/utils/constants"
+import { useBridge } from "src/utils/bexBridge"
 
 const STORE_NAME = "rolls"
 
 export const useRollsStore = defineStore(STORE_NAME, () => {
+  const { bexSendBridged } = useBridge()
+
   // ========== STATE ==========
-  const rolls = reactive({})
   const uid = getUid()
 
-  function addRoll (data, key) {
-    // TODO: Add to IDB, not the store - then notify anyone who's listening.
-    rolls[key] = data
-  }
+  async function addRoll (data) {
+    const db = await dbPromise
+    await db.put(TABLE_NAME_ROLLS, data)
 
-  watch(rolls, () => persistDebounced())
+    bexSendBridged("ui", "roll-persisted")
+  }
 
   // #region ========== PERSISTENCE ==========
   const restored = ref(false)
   const restoration = ref(null)
 
-  const { bexSend, bexOn } = useBridge()
-
-  let timeout = null
-  function persistDebounced () {
-    if (!restored.value) return
-    if (timeout) clearTimeout(timeout)
-    timeout = setTimeout(persist, 750)
-  }
-
-  function persist () {
-    if (!restored.value) return
-
-    if (isBex) {
-      // Persist state via BEX bridge
-      bexSend("persist-store", {
-        key: STORE_NAME,
-        uid,
-        value: {
-          rolls: unref(rolls),
-        },
-      })
-    } else {
-      // TODO: This is not a BEX, store will have to be persisted some other way
-    }
-  }
-
-  async function restore () {
-    if (isBex) {
-      // Restore state via BEX bridge
-      const { data } = await bexSend("restore-store", STORE_NAME)
-      if (data && "rolls" in data) {
-        for (const key in data.rolls) {
-          if (Object.hasOwnProperty.call(data.rolls, key)) {
-            // todo: just set? object.assign?
-            rolls[key] = data.rolls[key]
-          }
-        }
-        return true
-      } else {
-        // No data was restored, but the connection succeeded. This is considered a success.
-        return true
-      }
-    }
-    // TODO: this is not a BEX, store will have to be restored some other way
-    return true
-  }
-
-  bexOn(`store-persisted.${STORE_NAME}`, ({ data }) => {
-    if (data.uid !== uid) {
-      restored.value = false
-      restoration.value = restore().then((success) => {
-        restored.value = success
-      })
-    }
-  })
-
-  restoration.value = restore().then((success) => {
-    restored.value = success
-  })
+  restoration.value = new Promise(resolve => { resolve(true) })
+  restored.value = true
 
   // #endregion
 
@@ -88,7 +34,7 @@ export const useRollsStore = defineStore(STORE_NAME, () => {
     uid,
     restored,
     restoration,
-    rolls,
+    // rolls,
     addRoll,
   }
 })

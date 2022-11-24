@@ -82,17 +82,15 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref/* , toRaw */ } from "vue"
+import { onBeforeUnmount, onMounted, ref } from "vue"
 import { scroll } from "quasar"
 
 import { dbPromise } from "src/boot/idb"
 import { TABLE_NAME_ROLLS } from "src/utils/constants"
 import { sleep } from "src/utils/helpers"
-import { useRollsStore } from "src/stores/rolls-store"
+import { useBridge } from "src/utils/bexBridge"
 
 const root = ref(null)
-
-const rollStore = useRollsStore()
 
 // #region ========== IDB QUERIES ==========
 const items = ref([])
@@ -147,8 +145,14 @@ async function loadMoreItems (loadNewest = false, done = null) {
   const newItems = []
 
   while (cursor) {
+    // TODO: Filter out debug rolls
+
     // get the new item
-    newItems.push(cursor.value)
+    if (process.env.DEBUGGING) {
+      newItems.push(cursor.value)
+    } else {
+      if (!cursor.value.debug) newItems.push(cursor.value)
+    }
     // Update last/first cursor value
     if (firstCursor.value == null) firstCursor.value = cursor.key
     else firstCursor.value = Math.max(firstCursor.value, cursor.key)
@@ -202,24 +206,11 @@ async function loadMoreItems (loadNewest = false, done = null) {
     loadingItems.value = false
   })
 }
+const { bexOn } = useBridge()
 
-// TODO: Rename to "import rolls"
-//    Show this in one build
-//    remove rolls after a successful import
-// async function writeDb () {
-//   await dbPromise.then(db => {
-//     const tx = db.transaction(TABLE_NAME_ROLLS, "readwrite")
-
-//     for (const roll of Object.values(rollStore.rolls)) {
-//       tx.store.put(toRaw(roll))
-//     }
-
-//     return tx.done
-//   })
-
-//   // reload items from IDB
-//   loadMoreItems(true)
-// }
+bexOn("roll-persisted", () => {
+  loadMoreItems(true)
+})
 // #endregion
 
 // #region ========== Scroll-To-Top Handling ==========
@@ -249,11 +240,6 @@ function scrollToTop () {
 
 // #endregion
 
-rollStore.restoration.then(() => {
-  console.log("There are", Object.keys(rollStore.rolls).length, "rolls stored")
-  console.log(rollStore.rolls)
-})
-
 // #region ========== Roll Items ==========
 const activeItems = ref({})
 function toggleRollView (id) {
@@ -265,9 +251,6 @@ const reInlineRoll = /\$\[\[(?<name>\d)]]/g
 const reModifier = /{{\s*mod\s*=\s*(\d+)\s*}}/i
 
 function getRollHtml (roll) {
-  // const roll = rollStore.rolls[id]
-  console.log(roll)
-
   const getSpanWithTooltip = (textContent, tooltip) => {
     return `<span title="${tooltip}">${textContent}</span>`
   }

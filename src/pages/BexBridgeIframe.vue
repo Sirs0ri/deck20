@@ -133,7 +133,7 @@ bexOn("persist-roll", ({ data }) => {
   if (process.env.DEBUGGING) {
     data.debug = true
   }
-  if (data?.msgData?.id) rollStore.addRoll(data, data.msgData.id)
+  if (data?.msgData) rollStore.addRoll(data)
 })
 </script>
 
