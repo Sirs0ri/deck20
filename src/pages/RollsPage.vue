@@ -5,14 +5,6 @@
         Würfe
       </q-item>
 
-      <!-- <q-item>
-        <q-btn
-          label="Enter something in the DB"
-          flat
-          @click="writeDb()"
-        />
-      </q-item> -->
-
       <q-timeline color="primary">
         <q-infinite-scroll @load="(_, done) =>loadMoreItems(false, done)">
           <template #loading>
@@ -25,52 +17,77 @@
             </div>
           </template>
 
-          <q-timeline-entry
-            v-for="roll in items"
-            :key="roll.msgData.id"
-            side="left"
-            class="no-title no-subtitle"
-          >
-            <q-item>
-              <q-item-section top>
-                <q-item-label>{{ roll.talent.name }}</q-item-label>
-                <q-item-label v-if="activeItems[roll.msgData.id]" style="word-break: break-all;">
-                  <!-- eslint-disable-next-line vue/no-v-html -->
-                  <div v-html="getRollHtml(roll)" />
-                </q-item-label>
-                <q-item-label v-else caption>
-                  TaW: {{ roll.talent.value }}
-                  TaP*: {{ roll.total }}
-                  Mod: {{ roll.msgData?.original_content?.match(reModifier)?.[1] || "unbekannt" }}
-                  <br>
-                  {{ new Date(roll.msgData.realtimestamp).toLocaleString() }}
-                </q-item-label>
-              </q-item-section>
-              <q-item-section side top>
-                <q-btn
-                  icon="sym_r_expand_more"
-                  round
-                  flat
-                  :class="{'rotate-180': activeItems[roll.msgData.id]}"
-                  style="transition: transform 300ms"
-                  @click="toggleRollView(roll.msgData.id)"
-                />
-              </q-item-section>
-            </q-item>
-          </q-timeline-entry>
+          <template v-for="(roll, index) in items" :key="roll.msgData.id">
+            <div
+              v-if="itemHasNewDate(index)"
+              class="full-width row justify-center sticky-top"
+              :style="{'margin-top': index ? '-36px' : '0px'}"
+            >
+              <q-chip
+                color="primary"
+                text-color="white"
+                icon="sym_r_event"
+                outline
+                class="icon-md-filled bg-white"
+              >
+                {{ formatDate(roll.msgData.realtimestamp, "date") }}
+              </q-chip>
+            </div>
+            <q-timeline-entry
+              side="left"
+              class="no-title no-subtitle"
+              :style="{'padding-bottom': itemHasNewDate(index+1) ? '36px': '0px'}"
+            >
+              <q-item>
+                <q-item-section top>
+                  <q-item-label>{{ roll.talent.name }}</q-item-label>
+                  <q-item-label v-if="expandedItems[roll.msgData.id]" style="word-break: break-all;">
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <div v-html="getRollHtml(roll)" />
+                  </q-item-label>
+                  <q-item-label v-else caption>
+                    TaW: {{ roll.talent.value }}
+                    TaP*: {{ roll.total }}
+                    Mod: {{ roll.msgData?.original_content?.match(reModifier)?.[1] || "unbekannt" }}
+                    <br>
+                    {{ formatDate(roll.msgData.realtimestamp) }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side top>
+                  <q-btn
+                    icon="sym_r_expand_more"
+                    round
+                    flat
+                    :class="{'rotate-180': expandedItems[roll.msgData.id]}"
+                    style="transition: transform 300ms"
+                    @click="toggleRollView(roll.msgData.id)"
+                  />
+                </q-item-section>
+              </q-item>
+            </q-timeline-entry>
+          </template>
         </q-infinite-scroll>
       </q-timeline>
-      <q-item-label
-        v-if="!moreItemsAvailable"
-        caption
-        class="text-center q-mb-lg q-mt-md"
-      >
-        Du bist am Ende der Liste angekommen!
-      </q-item-label>
+
+      <q-separator />
+      <div class="full-width row justify-center">
+        <q-chip
+          color="white"
+          class="text-caption q-ma-none no-pointer-events"
+          style="color: rgba(0, 0, 0, 0.54); transform: translateY(-50%)"
+        >
+          Ende der Liste
+        </q-chip>
+      </div>
     </q-list>
 
     <!-- FAB -->
-    <div class="sticky-fab" :style="fabVisible ? '' : 'scale: 0.9; opacity: 0; pointer-events: none;'">
+    <div
+      class="sticky-fab"
+      :style="fabVisible ?
+        '' :
+        'pointer-events: none; transform: translateY(-50%) scale(0.5, 0.8); opacity: 0;'"
+    >
       <q-btn
         ref="fab"
         fab
@@ -82,12 +99,12 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue"
+import { onBeforeUnmount, onMounted, ref, computed } from "vue"
 import { scroll } from "quasar"
 
 import { dbPromise } from "src/boot/idb"
 import { TABLE_NAME_ROLLS } from "src/utils/constants"
-import { sleep } from "src/utils/helpers"
+import { formatDate, sleep } from "src/utils/helpers"
 import { useBridge } from "src/utils/bexBridge"
 
 const root = ref(null)
@@ -145,8 +162,6 @@ async function loadMoreItems (loadNewest = false, done = null) {
   const newItems = []
 
   while (cursor) {
-    // TODO: Filter out debug rolls
-
     // get the new item
     if (process.env.DEBUGGING) {
       newItems.push(cursor.value)
@@ -213,15 +228,18 @@ bexOn("roll-persisted", () => {
 })
 // #endregion
 
-// #region ========== Scroll-To-Top Handling ==========
+// #region ========== Scroll-To-Top ==========
 
 const { getScrollTarget, setVerticalScrollPosition } = scroll
-
-const fabVisible = ref(false)
 
 // this doesn't need to be reactive, it's enough to get it once
 let scrollTarget
 
+const scrollPos = ref(0)
+const scrolling = ref(false)
+const fabVisible = computed(() => !(scrolling.value || scrollPos.value <= 10))
+
+// event listeners to get the current scroll position
 onMounted(() => {
   scrollTarget = getScrollTarget(root.value.$el)
   scrollTarget.addEventListener("scroll", onScroll)
@@ -230,21 +248,30 @@ onBeforeUnmount(() => {
   scrollTarget.removeEventListener("scroll", onScroll)
 })
 function onScroll (evt) {
-  if (evt.target.scrollTop && fabVisible.value) return
-  fabVisible.value = evt.target.scrollTop > 0
+  scrollPos.value = evt.target.scrollTop
 }
 
+// Do the scroll-to-top.
+// scrolling is part of the calculation to see if the FAB should be hidden,
+// by setting it to true right away, the FAB will hide right away, which
+// gives it a snappy feel.
 function scrollToTop () {
-  setVerticalScrollPosition(scrollTarget, 0, 100)
+  scrolling.value = true
+  /** in ms */
+  const scrollDuration = 100
+  setVerticalScrollPosition(scrollTarget, 0, scrollDuration)
+  setTimeout(() => {
+    scrolling.value = false
+  }, scrollDuration)
 }
 
 // #endregion
 
 // #region ========== Roll Items ==========
-const activeItems = ref({})
+const expandedItems = ref({})
 function toggleRollView (id) {
-  if (activeItems.value[id]) delete activeItems.value[id]
-  else activeItems.value[id] = true
+  if (expandedItems.value[id]) delete expandedItems.value[id]
+  else expandedItems.value[id] = true
 }
 
 const reInlineRoll = /\$\[\[(?<name>\d)]]/g
@@ -262,6 +289,18 @@ function getRollHtml (roll) {
   })
 
   return htmlStr
+}
+
+function itemHasNewDate (index) {
+  if (!index) return true
+  if (index >= items.value.length) return false
+
+  const currentItem = items.value[index]
+  const previousItem = items.value[index - 1]
+
+  const isDifferent = formatDate(currentItem.msgData.realtimestamp, "date") !== formatDate(previousItem.msgData.realtimestamp, "date")
+
+  return isDifferent
 }
 // #endregion
 </script>
@@ -307,11 +346,11 @@ function getRollHtml (roll) {
   z-index: 2;
   // Remove the transform applied with an active footer, don't need it since the
   // parent will not extend below the footer due to scrolling parent in Layout!
-  transform: none !important;
+  transform: translateY(0) scale(1) opacity(1);
 
-  scale: 1;
+  /* scale: 1; */
   opacity: 1;
 
-  transition: scale 200ms, opacity 170ms;
+  transition: opacity 170ms, transform 200ms;
 }
 </style>

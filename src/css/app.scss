@@ -28,6 +28,12 @@ html, body, #q-app, .q-layout, .q-page-container {
   background: rgba(white, 0.8);
 }
 
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .q-timeline__entry {
 
   &.no-subtitle .q-timeline__subtitle{
