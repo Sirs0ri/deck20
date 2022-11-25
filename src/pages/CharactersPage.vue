@@ -762,7 +762,7 @@ function onTokenItemClick (id) {
 // #endregion
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .hidden {
   position: absolute;
   height: var(--max-heigt, 0px);
@@ -800,12 +800,18 @@ function onTokenItemClick (id) {
     position: relative;
     aspect-ratio: 0.8;
   }
-  &>.q-btn {
+
+  // This is scoped SCSS, and the q-btn-fab is technically part of a child component
+  // To be able to style that child component, break out of the scope via :deep
+  // see: https://vue-loader.vuejs.org/guide/scoped-css.html#deep-selectors
+  &:deep(.q-btn--fab) {
     border-radius: 0;
     padding: 16px 8px;
     min-width: 48px;
   }
-  &:before, &:after {
+
+  &::before,
+  &::after {
     content: "";
     position: absolute;
     height: 95%;
@@ -821,14 +827,14 @@ function onTokenItemClick (id) {
     top: 4px;
     transform: rotate(-3deg);
   }
-  &.q-fab--opened::before {
-    transform: rotate(-9deg);
-  }
   &::after {
     top: 0px;
     right: 1px;
     transform: rotate(4deg);
     z-index: -2;
+  }
+  &.q-fab--opened::before {
+    transform: rotate(-9deg);
   }
   &.q-fab--opened::after {
     transform: rotate(9deg);
