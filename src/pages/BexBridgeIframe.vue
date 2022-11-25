@@ -11,6 +11,7 @@ import { storeToRefs } from "pinia"
 import { useCharacterStore } from "src/stores/characters-store"
 import { useRollsStore } from "src/stores/rolls-store"
 import { useBridge } from "src/utils/bexBridge"
+import { onBeforeUnmount, onMounted } from "vue"
 
 /** Wrapper for console.log that adds a "[bex] iframe" prefix infront of the logged message
  *
@@ -128,13 +129,30 @@ bexOn("query-attributes", async ({ data }) => {
   $q.bex.send("bridge-forward", responseMsg)
 })
 
-bexOn("persist-roll", ({ data }) => {
+function sendRollToIdb (data) {
   log("I was asked to persist a roll:", data)
   if (process.env.DEBUGGING) {
+    // TODO: Set this also if /talktomyself was on
     data.debug = true
   }
   if (data?.msgData) rollStore.addRoll(data)
+}
+bexOn("persist-roll", ({ data }) => sendRollToIdb(data))
+
+async function getRollFromIdb (id) {
+  return await rollStore.getRoll(id)
+}
+
+onMounted(() => {
+  window.deck20_add_roll = sendRollToIdb
+  window.deck20_get_roll = getRollFromIdb
 })
+
+onBeforeUnmount(() => {
+  delete window.deck20_add_roll
+  delete window.deck20_get_roll
+})
+
 </script>
 
 <style lang="scss">
