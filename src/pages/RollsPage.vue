@@ -316,7 +316,7 @@ function itemHasNewDate (index) {
 // #endregion
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .sheet-rolltemplate-default table {
   width: 100%;
   background-color: white;
@@ -357,9 +357,8 @@ function itemHasNewDate (index) {
   z-index: 2;
   // Remove the transform applied with an active footer, don't need it since the
   // parent will not extend below the footer due to scrolling parent in Layout!
-  transform: translateY(0) scale(1) opacity(1);
+  transform: translateY(0) scale(1);
 
-  /* scale: 1; */
   opacity: 1;
 
   transition: opacity 170ms, transform 200ms;
