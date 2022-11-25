@@ -21,6 +21,12 @@ export const useRollsStore = defineStore(STORE_NAME, () => {
     bexSendBridged("ui", "roll-persisted")
   }
 
+  async function getRoll (id) {
+    const db = await dbPromise
+    const item = await db.get(TABLE_NAME_ROLLS, id)
+    return item
+  }
+
   // #region ========== PERSISTENCE ==========
   const restored = ref(false)
   const restoration = ref(null)
@@ -36,5 +42,6 @@ export const useRollsStore = defineStore(STORE_NAME, () => {
     restoration,
     // rolls,
     addRoll,
+    getRoll,
   }
 })
