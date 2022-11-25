@@ -275,7 +275,7 @@ function toggleRollView (id) {
 }
 
 const reInlineRoll = /\$\[\[(?<name>\d)]]/g
-const reModifier = /{{\s*mod\s*=\s*(\d+)\s*}}/i
+const reModifier = /{{\s*mod\s*=\s*(-?\d+)\s*}}/i
 
 function getRollHtml (roll) {
   const getSpanWithTooltip = (textContent, tooltip) => {
