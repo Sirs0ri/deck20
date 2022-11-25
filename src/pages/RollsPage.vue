@@ -86,7 +86,7 @@
       class="sticky-fab"
       :style="fabVisible ?
         '' :
-        'pointer-events: none; transform: translateY(-50%) scale(0.5, 0.8); opacity: 0;'"
+        'pointer-events: none; transform: translateY(-30%) scale(0.5, 0.8); opacity: 0;'"
     >
       <q-btn
         ref="fab"
@@ -112,7 +112,7 @@ const root = ref(null)
 // #region ========== IDB QUERIES ==========
 const items = ref([])
 const loadingItems = ref(false)
-const cursorSteps = 10
+const cursorSteps = 20
 
 const firstCursor = ref(null)
 const lastCursor = ref(null)
