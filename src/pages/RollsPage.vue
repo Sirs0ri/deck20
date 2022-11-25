@@ -5,6 +5,15 @@
         Würfe
       </q-item>
 
+      <q-item v-if="showDebugInfo">
+        <q-item-section avatar>
+          <q-icon name="sym_r_info" color="blue-grey-4" />
+        </q-item-section>
+        <q-item-section>
+          Würfe in grau wurden mit einer Debug-Version dieser Browser-Erweiterung gespeichert
+        </q-item-section>
+      </q-item>
+
       <q-timeline color="primary">
         <q-infinite-scroll @load="(_, done) =>loadMoreItems(false, done)">
           <template #loading>
@@ -37,6 +46,7 @@
               side="left"
               class="no-title no-subtitle"
               :style="{'padding-bottom': itemHasNewDate(index+1) ? '36px': '0px'}"
+              :color="roll.debug ? 'blue-grey-4' : 'primary'"
             >
               <q-item>
                 <q-item-section top>
@@ -268,6 +278,7 @@ function scrollToTop () {
 // #endregion
 
 // #region ========== Roll Items ==========
+const showDebugInfo = process.env.DEBUGGING
 const expandedItems = ref({})
 function toggleRollView (id) {
   if (expandedItems.value[id]) delete expandedItems.value[id]
