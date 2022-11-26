@@ -52,6 +52,50 @@ async function injectChatAutocompleteResponder (func) {
     })
   }
 
+  // reset search function that would only search on [\wäöüÄÖÜß#%{]+$
+  chat.$textarea.autocomplete("option", "search", () => true)
+
+  function select (event, { item }) {
+    // Tell jQuery that we're handling this event
+    // To do so, find the see if a part of the selected choice is at the end of
+    // the text area, and replace that. Otherwise, append the selected choice
+    // after a space.
+    event.preventDefault()
+
+    let currentValue = event.target.value
+    // FIXME: This trimEnd can lead to parts of a previous command being replaced, eg:
+    // /ei n -> /eIntuition
+    const currentLC = currentValue.toLowerCase().trimEnd()
+    const trimmedWhitespaceLength = currentValue.length - currentLC.length
+
+    let itemLength = item.value.length
+    const valueLC = item.value.toLowerCase()
+
+    while (itemLength) {
+      // Try and find a replaceable match for the autocompleted message
+      // eg. /w sirs -> /w Sirs0ri
+      if (currentLC.endsWith(valueLC.substring(0, itemLength))) {
+        event.target.value = currentValue.substring(0, currentValue.length - itemLength - trimmedWhitespaceLength) + item.value
+        return
+      }
+      itemLength--
+    }
+
+    const messageParts = currentValue.split(" ")
+    log(currentValue, messageParts)
+    const possibleQuery = messageParts.pop()
+
+    if (possibleQuery !== "" && valueLC.match(possibleQuery)) {
+      event.target.value = [...messageParts, item.value].join(" ")
+      return
+    }
+
+    currentValue = currentValue.trimEnd() + " "
+
+    event.target.value = currentValue + item.value
+  }
+  chat.$textarea.autocomplete("option", "select", select)
+
   chat.$textarea.autocomplete("option", "source", newResponder)
 }
 
@@ -227,6 +271,23 @@ export default bexDom(async (bridge) => {
         log("character:", data)
         return data.result
       })
+    }
+    // help
+    if (query.term.startsWith("/") && !query.term.includes(" ")) {
+      const q = query.term.substring(1)
+      return [
+        // Roll20 features
+        { label: "/w <username>", value: "/w " },
+        { label: "/r, /roll <roll>", value: "/r " },
+        { label: "/gr, /gmroll <roll to gm>", value: "/gr " },
+        { label: "/ooc <message as player>", value: "/ooc " },
+        { label: "/e, /em, /me <emote as selected character>", value: "/e " },
+        { label: "/talktomyself", value: "/gr " },
+        { label: "/fx <type-color> <from> [<to>]", value: "/fx " },
+        // deck20 features
+        { label: "/t <talent>", value: "/t " },
+        { label: "/ew <eigenschaft>", value: "/ew " },
+      ].filter(option => q === "" || option.value.includes(q))
     }
   }
   injectChatAutocompleteResponder(interceptAutocompleteQuery)
