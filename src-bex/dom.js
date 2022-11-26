@@ -265,7 +265,8 @@ export default bexDom(async (bridge) => {
   async function interceptAutocompleteQuery (query) {
     log("autocomplete query:", query)
 
-    if (query.term.startsWith("/t")) {
+    // Roll for talents
+    if (query.term.startsWith("/t ")) {
       const msg = query.term.substring(2).toLowerCase().trim()
       return await bridgedMessage("ui", "query-talents", { filter: msg }).then(data => {
         log("character:", data)
@@ -329,7 +330,7 @@ export default bexDom(async (bridge) => {
           await bridgedMessage(
             "ui",
             "query-attributes",
-            { filter: talent.attributes },
+            { filter: talent.attributes, short: true },
           )
             .then(d => {
               attributeData = d.result
