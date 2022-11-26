@@ -295,6 +295,13 @@ export default bexDom(async (bridge) => {
   async function interceptSendChatMessage (msg, origin, callbackId, arg4) {
     log("new outgoing message:", `"${msg}" via "${origin}".`, "extra args:", callbackId, arg4)
 
+    // expand macros once, that way all the syntax added by this BEX is available in macros (not nested macros though)
+    if (msg.startsWith("#")) {
+      const macroName = msg.substring(1)
+      const macro = window.currentPlayer.macros.models.find(m => m.attributes.name === macroName)
+
+      if (macro) msg = macro.attributes.action
+    }
     // Talent rolls
     if (msg.startsWith("/t ")) {
       const talentName = msg.substring(2).toLowerCase().trim()
