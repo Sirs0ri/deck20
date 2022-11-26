@@ -273,6 +273,46 @@ export default bexDom(async (bridge) => {
         return data.result
       })
     }
+    // Roll20 fx options
+    if (query.term.startsWith("/fx ")) {
+      if (query.term.trimEnd().endsWith("-")) {
+        // query has an effect
+        return [
+          "-acid",
+          "-blood",
+          "-charm",
+          "-death",
+          "-fire",
+          "-frost",
+          "-holy",
+          "-magic",
+          "-slime",
+          "-smoke",
+          "-water",
+        ]
+      } else if (query.term.includes("-")) {
+        // Query has an effect and style
+        return (query.term.includes("breath") || query.term.includes("beam"))
+          ? ["@{target|from|token_id} @{target|to|token_id}"]
+          : ["@{target|from|token_id}"]
+      }
+
+      return [
+        // query is empty
+        { label: "beam", value: "beam-" },
+        { label: "bomb", value: "bomb-" },
+        { label: "breath", value: "breath-" },
+        { label: "bubbling", value: "bubbling-" },
+        { label: "burn", value: "burn-" },
+        { label: "burst", value: "burst-" },
+        { label: "explode", value: "explode-" },
+        { label: "glow", value: "glow-" },
+        { label: "missile", value: "missile-" },
+        { label: "nova", value: "nova-" },
+        { label: "splatter", value: "splatter-" },
+      ]
+    }
+
     // help
     if (query.term.startsWith("/") && !query.term.includes(" ")) {
       const q = query.term.substring(1)
