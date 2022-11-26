@@ -37,29 +37,32 @@
                 text-color="white"
                 icon="sym_r_event"
                 outline
-                class="icon-md-filled bg-white"
+                class="icon-md-filled bg-white q-ma-sm"
               >
                 {{ formatDate(roll.msgData.realtimestamp, "date") }}
               </q-chip>
             </div>
             <q-timeline-entry
               side="left"
-              class="no-title no-subtitle"
+              class="no-title no-subtitle q-ml-md"
               :style="{'padding-bottom': itemHasNewDate(index+1) ? '36px': '0px'}"
               :color="roll.debug ? 'blue-grey-4' : 'primary'"
             >
-              <q-item>
-                <q-item-section top>
+              <q-item
+                clickable
+                class="rounded-borders bg-white"
+                @click="toggleRollView(roll.msgData.id)"
+              >
                 <q-item-section v-if="roll.talent" top>
                   <q-item-label>{{ roll.talent.name }}</q-item-label>
                   <q-item-label v-if="expandedItems[roll.msgData.id]" style="word-break: break-all;">
                     <!-- eslint-disable-next-line vue/no-v-html -->
-                    <div v-html="getRollHtml(roll)" />
+                    <div class="roll-html" v-html="getRollHtml(roll)" />
                   </q-item-label>
                   <q-item-label v-else caption>
                     TaW: {{ roll.talent.value }}
                     TaP*: {{ roll.total }}
-                    Mod: {{ roll.msgData?.original_content?.match(reModifier)?.[1] || "unbekannt" }}
+                    Mod: {{ roll.msgData?.original_content?.match(reModifier)?.[1] ?? "unbekannt" }}
                     <br>
                     {{ formatDate(roll.msgData.realtimestamp) }}
                   </q-item-label>
@@ -76,13 +79,10 @@
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side top>
-                  <q-btn
-                    icon="sym_r_expand_more"
-                    round
-                    flat
+                  <q-icon
+                    name="sym_r_expand_more"
                     :class="{'rotate-180': expandedItems[roll.msgData.id]}"
-                    style="transition: transform 300ms"
-                    @click="toggleRollView(roll.msgData.id)"
+                    style="transition: transform 100ms"
                   />
                 </q-item-section>
               </q-item>
@@ -104,18 +104,16 @@
     </q-list>
 
     <!-- FAB -->
-    <div
-      class="sticky-fab"
-      :style="fabVisible ?
-        '' :
-        'pointer-events: none; transform: translateY(-30%) scale(0.5, 0.8); opacity: 0;'"
-    >
-      <q-btn
-        ref="fab"
-        fab
-        icon="sym_r_keyboard_arrow_up"
-        @click="scrollToTop()"
-      />
+    <div class="sticky-fab">
+      <Transition name="fab">
+        <q-btn
+          v-if="fabVisible"
+          ref="fab"
+          fab
+          icon="sym_r_keyboard_arrow_up"
+          @click="scrollToTop()"
+        />
+      </Transition>
     </div>
   </q-page>
 </template>
@@ -329,36 +327,50 @@ function itemHasNewDate (index) {
 </script>
 
 <style lang="scss" scoped>
-.sheet-rolltemplate-default table {
-  width: 100%;
-  background-color: white;
-  border: 1px solid rgba(112, 32, 130, 1);
-}
+// Once again, using :deep to style components used in this page
+// and injected HTML that are out of scope by default
 
-.sheet-rolltemplate-default caption {
-  background-color: rgba(112, 32, 130, 1);
-  color: white;
-  font-family: "Helvetica Neue", Helvetica, sans-serif;
-  font-weight: 300;
-  font-size: 1.1em;
-  padding: 5px;
+.q-timeline:deep(.q-timeline__dot) {
+  // 24px: default icon width if an "avatar" item section
+  // 15px: default width of the dot
+  transform: translateX(calc((24px - 15px) / 2));
 }
+.roll-html {
+  position: relative;
+  background: white;
+  max-width: 40ch;
+  margin: 0 auto;
+  &:deep(.sheet-rolltemplate-default table) {
+    width: 100%;
+    background-color: white;
+    border: 1px solid rgba(112, 32, 130, 1);
+  }
 
-.sheet-rolltemplate-default td {
-  padding: 5px;
-  line-height: 1.4em;
-  vertical-align: top;
-}
+  &:deep(.sheet-rolltemplate-default caption) {
+    background-color: rgba(112, 32, 130, 1);
+    color: white;
+    font-family: "Helvetica Neue", Helvetica, sans-serif;
+    font-weight: 300;
+    font-size: 1.1em;
+    padding: 5px;
+  }
 
-.sheet-rolltemplate-default td:first-child {
-  font-weight: bold;
-  text-align: right;
-  min-width: 50px;
-  padding-right: 10px;
-}
+  &:deep(.sheet-rolltemplate-default td) {
+    padding: 5px;
+    line-height: 1.4em;
+    vertical-align: top;
+  }
 
-.sheet-rolltemplate-default tr:nth-child(even) {
-  background-color: #eee;
+  &:deep(.sheet-rolltemplate-default td:first-child) {
+    font-weight: bold;
+    text-align: right;
+    min-width: 50px;
+    padding-right: 10px;
+  }
+
+  &:deep(.sheet-rolltemplate-default tr:nth-child(even)) {
+    background-color: #eee;
+  }
 }
 
 .sticky-fab {
@@ -367,12 +379,16 @@ function itemHasNewDate (index) {
   right: 32px;
 
   z-index: 2;
-  // Remove the transform applied with an active footer, don't need it since the
-  // parent will not extend below the footer due to scrolling parent in Layout!
-  transform: translateY(0) scale(1);
+}
 
-  opacity: 1;
-
+.fab-enter-active,
+.fab-leave-active {
   transition: opacity 170ms, transform 200ms;
+}
+
+.fab-enter-from,
+.fab-leave-to {
+  transform: translateY(-30%) scale(0.5, 0.8);
+  opacity: 0;
 }
 </style>
