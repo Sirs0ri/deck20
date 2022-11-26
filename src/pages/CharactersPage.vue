@@ -5,7 +5,11 @@
     </q-item>
     <div ref="overlayContainer" class="character-content-wrapper q-mt-md">
       <!-- #region ATTRIBUTES / TALENTS -->
-      <q-list ref="statsOverview" class="relative-position">
+      <q-list
+        ref="statsOverview"
+        class="relative-position"
+        style="--negative-margin: -44px"
+      >
         <!-- Name / Class -->
         <template v-if="currentCharacter">
           <q-item>
@@ -45,7 +49,11 @@
           />
         </q-item>
 
-        <TransitionGroup name="list" tag="div">
+        <TransitionGroup
+          name="list"
+          tag="div"
+          style="--negative-margin: -37px"
+        >
           <q-item
             key="header_attributes"
             clickable
@@ -145,7 +153,7 @@
                   name="sym_r_favorite"
                   size="24px"
                   class="talent-fav-icon cursor-pointer"
-                  :class="{'icon-md-filled favorite': isFav(talent.name)}"
+                  :class="{'icon-md-filled favorite': favoriteTalents[talent.name]}"
                   color="primary"
                   @click="toggleFav(talent.name)"
                 />
@@ -291,6 +299,7 @@
             v-ripple
             tag="label"
             class="rounded-borders"
+            style="--negative-margin: -44px"
             @click.prevent="onTokenItemClick(t.id)"
           >
             <q-item-section avatar>
@@ -371,47 +380,49 @@
 
     <!-- FAB -->
     <div class="sticky-fab" :style="editingCharacter ? 'scale: 0.9; opacity: 0; pointer-events: none;': ''">
-      <q-fab
-        id="papers-fab"
-        ref="fab"
-        square
-        vertical-actions-align="right"
-        direction="up"
-        text-color="white"
-        @click="handleFabClick"
-      >
-        <template #icon>
-          <q-icon color="primary" :name="characterLoaded ? 'sym_r_sync': 'sym_r_file_upload'" />
-        </template>
-
-        <template #active-icon>
-          <q-icon color="primary" name="sym_r_close" />
-        </template>
-
-        <q-fab-action
-          v-for="(c, key) in characters"
-          :key="`character_switcher_${key}`"
+      <Transition name="fab" appear>
+        <q-fab
+          id="papers-fab"
+          ref="fab"
           square
-          external-label
-          color="white"
-          text-color="primary"
-          icon="sym_r_mood"
-          :label="c.generalData.name"
-          label-class="bg-grey-3 text-grey-8 text-caption"
-          label-position="left"
-          @click="store.setCurrentCharacter(key)"
-        />
-        <q-fab-action
-          external-label
-          color="white"
-          text-color="primary"
-          icon="sym_r_file_upload"
-          label="Importieren"
-          label-class="bg-grey-3 text-grey-8 text-caption"
-          label-position="left"
-          @click="pickCharacterFile"
-        />
-      </q-fab>
+          vertical-actions-align="right"
+          direction="up"
+          text-color="white"
+          @click="handleFabClick"
+        >
+          <template #icon>
+            <q-icon color="primary" :name="characterLoaded ? 'sym_r_sync': 'sym_r_file_upload'" />
+          </template>
+
+          <template #active-icon>
+            <q-icon color="primary" name="sym_r_close" />
+          </template>
+
+          <q-fab-action
+            v-for="(c, key) in characters"
+            :key="`character_switcher_${key}`"
+            square
+            external-label
+            color="white"
+            text-color="primary"
+            icon="sym_r_mood"
+            :label="c.generalData.name"
+            label-class="bg-grey-3 text-grey-8 text-caption"
+            label-position="left"
+            @click="store.setCurrentCharacter(key)"
+          />
+          <q-fab-action
+            external-label
+            color="white"
+            text-color="primary"
+            icon="sym_r_upload_file"
+            label="Importieren"
+            label-class="bg-grey-3 text-grey-8 text-caption icon-md-filled"
+            label-position="left"
+            @click="pickCharacterFile"
+          />
+        </q-fab>
+      </Transition>
 
       <!-- Hidden file input for import -->
       <input
@@ -574,7 +585,7 @@ function getItems (groupName) {
   const matches = Object.values(currentCharacter.value.talents)
     .filter(t => (
       t.group === groupName &&
-      (expanded || isFav(t.name) ||
+      (expanded || favoriteTalents[t.name] ||
       (talentSearch.value !== "" && t.name.match(re)))
     ))
     .map(t => [t.name, t])
@@ -583,7 +594,7 @@ function getItems (groupName) {
     const inactiveTalents = talentGroups[groupName].talents
       .filter(t => (
         expanded ||
-        isFav(t) ||
+        favoriteTalents[t] ||
         (talentSearch.value !== "" && t.match(re))
       ))
       .map(t => [t, { name: t }])
@@ -598,18 +609,13 @@ function getItems (groupName) {
 // #endregion
 
 // #region ========== HELPERS ==========
-const favoriteTalents = reactive([])
+// TODO: This doesn't survive a reload at the moment.
+const favoriteTalents = reactive({})
 
 /** @param {String} talent */
-function isFav (talent) {
-  const index = favoriteTalents.indexOf(talent)
-  return index >= 0
-}
-/** @param {String} talent */
 function toggleFav (talent) {
-  const index = favoriteTalents.indexOf(talent)
-  if (index >= 0) favoriteTalents.splice(index, 1)
-  else favoriteTalents.push(talent)
+  if (favoriteTalents[talent]) delete favoriteTalents[talent]
+  else favoriteTalents[talent] = true
 }
 
 // #endregion
@@ -783,8 +789,8 @@ function onTokenItemClick (id) {
 }
 .sticky-fab {
   position: fixed;
-  bottom: 12px;
-  right: 30px;
+  bottom: 16px;
+  right: 32px;
 
   z-index: 3;
   // Remove the transform applied with an active footer, don't need it since the
@@ -792,13 +798,22 @@ function onTokenItemClick (id) {
   transform: none !important;
 }
 
+.fab-enter-active,
+.fab-leave-active {
+  transition: opacity 170ms, transform 200ms;
+}
+
+.fab-enter-from,
+.fab-leave-to {
+  transform: scale(0.7);
+  opacity: 0;
+}
+
 #papers-fab {
   /* https://css-tricks.com/snippets/css/stack-of-paper/ */
 
   &.q-fab {
-    padding: 3px;
     position: relative;
-    aspect-ratio: 0.8;
   }
 
   // This is scoped SCSS, and the q-btn-fab is technically part of a child component
@@ -806,38 +821,40 @@ function onTokenItemClick (id) {
   // see: https://vue-loader.vuejs.org/guide/scoped-css.html#deep-selectors
   &:deep(.q-btn--fab) {
     border-radius: 0;
-    padding: 16px 8px;
-    min-width: 48px;
+    padding: 18px 12px;
+    min-width: unset;
+    transform: translateX(-4px);
   }
 
   &::before,
   &::after {
     content: "";
     position: absolute;
-    height: 95%;
-    width: 95%;
+    height: 100%;
+    width: 100%;
     background-color: #E5F5FA;
     box-shadow: 1px 1px 1px rgb(0 0 0 / 20%);
     transition: transform 200ms;
-    transform-origin: 50% 70%;
   }
   &::before {
     z-index: -1;
-    right: 2px;
-    top: 4px;
+    right: 7px;
+    top: -3px;
     transform: rotate(-3deg);
+    transform-origin: 50% 70%;
   }
   &::after {
-    top: 0px;
-    right: 1px;
+    top: 2px;
+    right: 2px;
     transform: rotate(4deg);
     z-index: -2;
+    transform-origin: 60% 80%;
   }
   &.q-fab--opened::before {
     transform: rotate(-9deg);
   }
   &.q-fab--opened::after {
-    transform: rotate(9deg);
+    transform: rotate(7deg);
   }
 }
 
