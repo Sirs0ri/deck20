@@ -100,12 +100,12 @@ bexOn("query-attributes", async ({ data }) => {
   let attributes = Object.values(currentCharacter.value.attributes)
 
   if (data.filter) {
-    const rExpIllegals = /[.*+?^${}()|[\]\\]/g
+    const rExpIllegals = /[.*+?^${}()|[\]\\]/gi
     const rExpEscape = (word) => word.replace(rExpIllegals, "\\$&")
 
     const str = (data.filter instanceof Array) ? data.filter.map(word => `(${rExpEscape(word)})`).join("|") : rExpEscape(data.filter)
     const re = new RegExp(str, "i")
-    attributes = attributes.filter(a => a.short.match(re))
+    attributes = attributes.filter(a => data.short ? a.short.match(re) : a.name.match(re))
   }
 
   const responseMsg = {
