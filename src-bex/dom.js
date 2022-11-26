@@ -111,10 +111,18 @@ async function injectChatSendHandler (func) {
   const chat = await getChat(true)
   const ogHandler = chat.doChatInput
 
-  function newHandler (msg, src = "chatbox", callbackId = undefined, arg4 = void 0) {
+  /**
+   *
+   * @param {String} msg the chat message
+   * @param {("chatbox"|"quickdice"|"charsheet")} src where the message came from
+   * @param {String|undefined} callbackId Id of a callback to run once the message is processed
+   * @param {*} arg4 Unknown 4th argument
+   */
+  function newHandler (msg, src = "chatbox", callbackId = undefined, arg4 = undefined) {
     // src: [chatbox, quickdice, charsheet]
     // callbackId: will be added as "listenerid" into the message. Additionally, there'll be a jQuery event with the handler "mancerroll:<callbackId>" on $(document)
     func(msg, src, callbackId, arg4).then(stopProcessing => {
+      log("running the oghandler for", msg)
       if (!stopProcessing) ogHandler(msg, src, callbackId, arg4)
     })
   }
