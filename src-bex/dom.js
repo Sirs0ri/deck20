@@ -281,6 +281,16 @@ export default bexDom(async (bridge) => {
         return data.result
       })
     }
+
+    // Roll for attributes
+    if (query.term.startsWith("/ew ")) {
+      const msg = query.term.substring(3).toLowerCase().trim()
+      return await bridgedMessage("ui", "query-attributes", { filter: msg }).then(data => {
+        log("character:", data)
+        return data.result
+      })
+    }
+
     // Roll20 fx options
     if (query.term.startsWith("/fx ")) {
       if (query.term.trimEnd().endsWith("-")) {
@@ -350,6 +360,70 @@ export default bexDom(async (bridge) => {
       const macro = window.currentPlayer.macros.models.find(m => m.attributes.name === macroName)
 
       if (macro) msg = macro.attributes.action
+    }
+
+    // Attribute rolls
+    if (msg.startsWith("/ew ")) {
+      const attributeName = msg.substring(3).toLowerCase().trim()
+      log("Got a query for a attribute roll:", attributeName)
+
+      // set up promises
+      let attributeData
+      let tokenData
+      const dataRequest = bridgedMessage(
+        "ui",
+        "query-attributes",
+        { filter: attributeName },
+      )
+        .then(async data => {
+          attributeData = data.result
+          tokenData = data.associatedToken
+
+          log("got attributeData:", attributeData)
+        })
+
+      // Query modifier
+      const mod = await queryInputFromPlayer("Erschwernis (+) oder Erleichterung (-)", 0, true)
+
+      // await promises
+      await dataRequest
+
+      const attribute = attributeData.find(a => a.attribute.name.toLowerCase() === attributeName).attribute
+
+      const attr0string = `${attribute.value} [${attribute.short}]`
+
+      // const maxValue = talent.value - mod
+      // const rollQuery = (maxValue < 0) ? `[[d20cs1cf20 + ${-maxValue}[mod-TaW]]]` : "[[d20cs1cf20]]"
+
+      const gmRollString = tokenData.name ? `@{${tokenData.name}|gm_roll_opt} ` : ""
+      log("gmRollString", gmRollString)
+
+      // TODO: remove the "dh1", can't get more TaP through good rolls!
+      const message = `${gmRollString} ${attribute.short}: [[${attr0string} - [[d20cs1cf20 + ${mod} ]] ]] // Wurf: $[[0]] vs ${attribute.value}`
+
+      doChatInputAsync(message).then(msgData => {
+        log("result of the roll", msgData)
+
+        const total = msgData.inlinerolls[1].results.total
+
+        const toPersist = {
+          attribute,
+          success: total >= 0,
+          total,
+          msgData,
+          mod,
+        }
+
+        log(toPersist)
+
+        bridgedMessage("ui", "persist-roll", toPersist)
+      })
+
+      // showSystemMessageToLocalPlayer(`<strong>${talent.name}</strong><br>
+      //   TaW: ${talent.value} <br>
+      //   ${attributeData.map(a => `${a.attribute.name} vs ${a.attribute.value}`).join("<br>")}
+      //   <pre>${JSON.stringify(talent, null, 4)}</pre>`)
+      return true
     }
     // Talent rolls
     if (msg.startsWith("/t ")) {

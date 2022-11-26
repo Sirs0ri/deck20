@@ -50,6 +50,7 @@
             >
               <q-item>
                 <q-item-section top>
+                <q-item-section v-if="roll.talent" top>
                   <q-item-label>{{ roll.talent.name }}</q-item-label>
                   <q-item-label v-if="expandedItems[roll.msgData.id]" style="word-break: break-all;">
                     <!-- eslint-disable-next-line vue/no-v-html -->
@@ -59,6 +60,17 @@
                     TaW: {{ roll.talent.value }}
                     TaP*: {{ roll.total }}
                     Mod: {{ roll.msgData?.original_content?.match(reModifier)?.[1] || "unbekannt" }}
+                    <br>
+                    {{ formatDate(roll.msgData.realtimestamp) }}
+                  </q-item-label>
+                </q-item-section>
+
+                <q-item-section v-else-if="roll.attribute">
+                  <q-item-label>{{ roll.attribute.name }}</q-item-label>
+                  <q-item-label caption>
+                    EW: {{ roll.attribute.value }}
+                    TaP*: {{ roll.total }}
+                    Mod: {{ roll.mod ?? "unbekannt" }}
                     <br>
                     {{ formatDate(roll.msgData.realtimestamp) }}
                   </q-item-label>

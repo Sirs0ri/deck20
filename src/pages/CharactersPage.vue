@@ -669,7 +669,7 @@ function deleteCharacter () {
 function roll (props) {
   const {
     name,
-    value,
+    // value,
     attributes = undefined,
   } = props
 
@@ -678,8 +678,8 @@ function roll (props) {
     bexSendBridged("dom", "send-message", { msg: `/t ${name}` })
     return
   }
-  // TODO: Roll attributes
-  log("Rolling", name, "vs", value)
+  // This is an attribute
+  bexSendBridged("dom", "send-message", { msg: `/ew ${name}` })
 }
 
 // #endregion
