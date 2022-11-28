@@ -492,11 +492,11 @@ const animY = ref("0px")
 function toggleEditCharacter (clickEvt) {
   roll20Unavailable.value = false
 
-  if (editOverlayOpen.value) { // switching to edit mode
+  if (!editOverlayOpen.value) { // switching to edit mode
     characterNameBackup.value = currentCharacter.value.generalData.name
 
     const scrollTarget = getScrollTarget(overlayContainer.value)
-    setVerticalScrollPosition(scrollTarget, 0, 100)
+    setVerticalScrollPosition(scrollTarget, 0, 200)
   }
 
   if (clickEvt instanceof PointerEvent) {
