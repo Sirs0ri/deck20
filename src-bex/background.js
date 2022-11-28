@@ -8,7 +8,20 @@ const log = (...args) => {
   if (process.env.DEBUGGING) { console.log("[bex] background:", ...args) }
 }
 
+self.addEventListener("install", (event) => {
+  // The promise that skipWaiting() returns can be safely ignored.
+  self.skipWaiting()
+
+  // Perform any other actions required for your
+  // service worker to install, potentially inside
+  // of event.waitUntil();
+
+  log("installed", Date.now())
+})
+
 // This shares state, theres only ever one background.js
+// Once the service worker is no longer used and is stopped,
+// this will be reset, which is fine.
 let serverActive = false
 let port
 let connectedTabs = 0
