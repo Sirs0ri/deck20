@@ -6,15 +6,14 @@
     <div ref="overlayContainer" class="character-content-wrapper q-mt-md">
       <!-- #region ATTRIBUTES / TALENTS -->
       <q-list
-        ref="statsOverview"
         class="relative-position"
         style="--negative-margin: -44px"
+        :class="{'hidden': mainContentHidden}"
       >
         <!-- Name / Class -->
         <template v-if="currentCharacter">
           <q-item>
             <q-item-section top>
-              <!-- style="min-height: 56px" -->
               <q-item-label :lines="1">
                 {{ currentCharacter.generalData.name }}
               </q-item-label>
@@ -35,7 +34,7 @@
         </template>
 
         <!-- Search -->
-        <q-item key="search" class="sticky-search">
+        <q-item key="search" class="sticky-search q-px-none">
           <q-input
             ref="searchBar"
             v-model="talentSearch"
@@ -119,7 +118,7 @@
             clickable
             class="rounded-borders bg-white sticky-heading"
             :style="{top: stickyHeadingTop}"
-            @click="expandedGroups[group.name] = !expandedGroups[group.name]"
+            @click="toggleGroupExpanded(group.name)"
           >
             <q-item-section avatar>
               <q-avatar>
@@ -244,144 +243,152 @@
       <!-- #endregion -->
 
       <!-- #region EDIT MODE -->
-      <q-list
-        v-if="currentCharacter"
-        ref="editOverlay"
-        class="char-edit-list"
-        style="--negative-margin: -58px"
+      <Transition
+        name="overlay"
+        @after-enter="mainContentHidden = true"
+        @before-leave="mainContentHidden = false"
       >
-        <q-item>
-          <q-item-section top>
-            <q-item-label :lines="1">
-              {{ currentCharacter.generalData.name }}
-            </q-item-label>
-            <q-item-label caption :lines="1">
-              {{ currentCharacter.generalData.profession }}
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side top>
-            <q-btn
-              ref="editCloseBtn"
-              icon="sym_r_task_alt"
-              color="primary"
-              round
-              flat
-              @click="toggleEditCharacter"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item>
-          <q-item-section>
-            <q-input
-              v-model="currentCharacter.generalData.name"
-              debounce="200"
-              autofocus
-              label="Name"
-              outlined
-              class="full-width"
-              clearable
-              clear-icon="sym_r_undo"
-              @clear="currentCharacter.generalData.name = characterNameBackup"
-              @keyup.enter.ctrl="toggleEditCharacter"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item-label header>
-          Verknüpftes Token
-        </q-item-label>
-
-        <TransitionGroup name="list">
-          <q-item
-            v-for="t in availableTokens"
-            :key="t.id"
-            v-ripple
-            tag="label"
-            class="rounded-borders"
-            style="--negative-margin: -44px"
-            @click.prevent="onTokenItemClick(t.id)"
-          >
-            <q-item-section avatar>
-              <q-avatar
-                :icon="t.avatar ? undefined : 'sym_r_question_mark'"
-                color="primary"
-                text-color="white"
-              >
-                <q-img v-if="t.avatar" :src="t.avatar" />
-              </q-avatar>
+        <!-- v-show="editOverlayOpen" -->
+        <q-list
+          v-if="currentCharacter && editOverlayOpen"
+          class="char-edit-list"
+          style="--negative-margin: -58px"
+        >
+          <q-item>
+            <q-item-section top>
+              <q-item-label :lines="1">
+                {{ currentCharacter.generalData.name }}
+              </q-item-label>
+              <q-item-label caption :lines="1">
+                {{ currentCharacter.generalData.profession }}
+              </q-item-label>
             </q-item-section>
-            <q-item-section>{{ t.name || "Kein verknüpftes Token" }}</q-item-section>
-            <q-item-section v-if="availableTokens.length > 1" side>
-              <q-radio
-                v-model="selectedToken"
-                :val="t.id"
-                size="42px"
-              />
-            </q-item-section>
-            <q-item-section v-else side>
+            <q-item-section side top>
               <q-btn
+                ref="editCloseBtn"
+                icon="sym_r_task_alt"
+                color="primary"
                 round
                 flat
-                icon="sym_r_search"
-                class="pointer-none"
-                :loading="loadingTokens"
+                @click="toggleEditCharacter"
               />
             </q-item-section>
           </q-item>
-          <q-item v-if="roll20Unavailable" key="connection_error">
-            <q-item-section avatar>
-              <q-avatar>
-                <q-icon name="sym_r_link_off" color="warning" />
-              </q-avatar>
-            </q-item-section>
+
+          <q-item class="q-px-none">
             <q-item-section>
-              <q-item-label>
-                Roll20 ist nicht erreichbar
-              </q-item-label>
-              <q-item-label caption>
-                Bitte öffne einen Tab mit der Kampagne aus der Du einen Charakter verknüpfen willst, und versuche es erneut.
-              </q-item-label>
+              <q-input
+                v-model="currentCharacter.generalData.name"
+                debounce="200"
+                autofocus
+                label="Name"
+                outlined
+                class="full-width"
+                clearable
+                clear-icon="sym_r_undo"
+                @clear="currentCharacter.generalData.name = characterNameBackup"
+                @keyup.enter.ctrl="toggleEditCharacter"
+              />
             </q-item-section>
           </q-item>
-        </TransitionGroup>
 
-        <q-item-label header>
-          Sonstiges
-        </q-item-label>
+          <q-item-label header>
+            Verknüpftes Token
+          </q-item-label>
 
-        <q-item v-ripple tag="label">
-          <q-item-section avatar>
-            <q-avatar icon="sym_r_delete" text-color="negative" />
-          </q-item-section>
-          <q-item-section>
-            Charakter löschen
-          </q-item-section>
-          <q-item-section side>
-            <q-checkbox v-model="deleteEnabled" color="grey-8" />
-          </q-item-section>
-        </q-item>
-        <q-item>
-          <q-item-section class="content-center">
-            <q-btn
-              color="negative"
-              flat
-              rounded
-              label="Löschen bestätigen"
-              :style="deleteEnabled ? '' : 'scale: 0.9; opacity: 0; pointer-events: none;'"
-              class="delete-character-btn"
-              @click="deleteCharacter"
-            />
-          </q-item-section>
-        </q-item>
-      </q-list>
+          <TransitionGroup name="list">
+            <q-item
+              v-for="t in availableTokens"
+              :key="t.id"
+              v-ripple
+              tag="label"
+              class="rounded-borders"
+              style="--negative-margin: -44px"
+              @click.prevent="onTokenItemClick(t.id)"
+            >
+              <q-item-section avatar>
+                <q-avatar
+                  :icon="t.avatar ? undefined : 'sym_r_question_mark'"
+                  color="primary"
+                  text-color="white"
+                >
+                  <q-img v-if="t.avatar" :src="t.avatar" />
+                </q-avatar>
+              </q-item-section>
+              <q-item-section>{{ t.name || "Kein verknüpftes Token" }}</q-item-section>
+              <q-item-section v-if="availableTokens.length > 1" side>
+                <q-radio
+                  v-model="selectedToken"
+                  :val="t.id"
+                  size="42px"
+                />
+              </q-item-section>
+              <q-item-section v-else side>
+                <q-btn
+                  round
+                  flat
+                  icon="sym_r_search"
+                  class="pointer-none"
+                  :loading="loadingTokens"
+                />
+              </q-item-section>
+            </q-item>
+            <q-item v-if="roll20Unavailable" key="connection_error">
+              <q-item-section avatar>
+                <q-avatar>
+                  <q-icon name="sym_r_link_off" color="warning" />
+                </q-avatar>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>
+                  Roll20 ist nicht erreichbar
+                </q-item-label>
+                <q-item-label caption>
+                  Bitte öffne einen Tab mit der Kampagne aus der Du einen Charakter verknüpfen willst, und versuche es erneut.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </TransitionGroup>
+
+          <q-item-label header>
+            Sonstiges
+          </q-item-label>
+
+          <q-item v-ripple tag="label">
+            <q-item-section avatar>
+              <q-avatar icon="sym_r_delete" text-color="negative" />
+            </q-item-section>
+            <q-item-section>
+              Charakter löschen
+            </q-item-section>
+            <q-item-section side>
+              <q-checkbox v-model="deleteEnabled" color="grey-8" />
+            </q-item-section>
+          </q-item>
+          <q-item>
+            <q-item-section class="content-center">
+              <Transition name="fab">
+                <q-btn
+                  v-if="deleteEnabled"
+                  color="negative"
+                  flat
+                  rounded
+                  label="Löschen bestätigen"
+                  @click="deleteCharacter"
+                />
+              </Transition>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </Transition>
       <!-- #endregion -->
     </div>
 
     <!-- FAB -->
-    <div class="sticky-fab" :style="editingCharacter ? 'scale: 0.9; opacity: 0; pointer-events: none;': ''">
+    <div class="sticky-fab">
       <Transition name="fab" appear>
         <q-fab
+          v-if="!editOverlayOpen"
           id="papers-fab"
           ref="fab"
           square
@@ -444,7 +451,6 @@ import {
   toRaw,
   computed,
   watch,
-  nextTick,
 } from "vue"
 import { storeToRefs } from "pinia"
 import { scroll } from "quasar"
@@ -473,96 +479,55 @@ const { currentCharacter, characters } = storeToRefs(store)
 // #region ========== UI ==========
 
 const overlayContainer = ref(null) // div
-const statsOverview = ref(null) // q-list
-const editOverlay = ref(null) // q-list
 const editOpenBtn = ref(null) // q-btn
 const editCloseBtn = ref(null) // q-btn
-const editingCharacter = ref(false)
 const characterNameBackup = ref("")
 
-watch(currentCharacter, () => {
-  // Let the UI refresh so that the editBtn gets drawn, then set the default
-  // X/Y coordinates for the character edit popup
-  nextTick(() => {
-    if (!currentCharacter.value) return
-    const animX = editOpenBtn.value.$el.offsetLeft + (0.5 * editOpenBtn.value.$el.offsetWidth)
-    const animY = editOpenBtn.value.$el.offsetTop + (0.5 * editOpenBtn.value.$el.offsetHeight)
+const editOverlayOpen = ref(false)
+const mainContentHidden = ref(false)
 
-    editOverlay.value.$el.style.setProperty("transition", "none")
-    editOverlay.value.$el.style.setProperty("--x", animX + "px")
-    editOverlay.value.$el.style.setProperty("--y", animY + "px")
-  })
-})
+const animX = ref("0px")
+const animY = ref("0px")
 
 function toggleEditCharacter (clickEvt) {
-  let animX, animY
-  let newBtn
-  editingCharacter.value = !editingCharacter.value
   roll20Unavailable.value = false
 
-  if (editingCharacter.value) { // switching to edit mode
-    newBtn = editCloseBtn.value.$el
+  if (editOverlayOpen.value) { // switching to edit mode
     characterNameBackup.value = currentCharacter.value.generalData.name
 
     const scrollTarget = getScrollTarget(overlayContainer.value)
     setVerticalScrollPosition(scrollTarget, 0, 100)
-  } else { // switching from edit mode
-    newBtn = editOpenBtn.value.$el
   }
 
   if (clickEvt instanceof PointerEvent) {
     // overlayContainer is a div, so .value has the HTML element
     const { offsetLeft, offsetTop } = overlayContainer.value
-    animX = clickEvt.pageX - offsetLeft
-    animY = clickEvt.pageY - offsetTop
+    animX.value = clickEvt.pageX - offsetLeft
+    animY.value = clickEvt.pageY - offsetTop
   } else {
-    animX = newBtn.offsetLeft + (0.5 * newBtn.offsetWidth)
-    animY = newBtn.offsetTop + (0.5 * newBtn.offsetHeight)
+    const newBtn = editOverlayOpen.value
+      ? editCloseBtn.value.$el
+      : editOpenBtn.value.$el
+
+    animX.value = newBtn.offsetLeft + (0.5 * newBtn.offsetWidth)
+    animY.value = newBtn.offsetTop + (0.5 * newBtn.offsetHeight)
   }
 
-  // editOverlay is a quasar element, so we need .$el
-  // disable transitions so that the change of x/y doesn't animate
-  editOverlay.value.$el.style.setProperty("transition", undefined)
-  editOverlay.value.$el.style.setProperty("--x", animX + "px")
-  editOverlay.value.$el.style.setProperty("--y", animY + "px")
-  statsOverview.value.$el.classList.remove("hidden")
+  animX.value += "px"
+  animY.value += "px"
 
-  // Wait for the dom to update, then:
-  nextTick(() => {
-    if (!editOverlay.value) return
-    // re-enable transitions so that the change of the % does animate
-    editOverlay.value.$el.style.setProperty("transition", "clip-path 400ms ease")
-
-    if (editingCharacter.value) {
-      const animHandler = (transitionEvt) => {
-        // Transition Events bubble, make sure we react to the right one
-        if (transitionEvt.srcElement !== editOverlay.value.$el) return
-
-        editOverlay.value.$el.removeEventListener("transitionend", animHandler)
-        statsOverview.value.$el.classList.add("hidden")
-      }
-
-      editOverlay.value.$el.addEventListener("transitionend", animHandler)
-      editOverlay.value.$el.style.setProperty("--max-heigt", editOverlay.value.$el.offsetHeight)
-    }
-
-    const newAnimPercent = editingCharacter.value ? "200vmax" : "0%"
-    editOverlay.value.$el.style.setProperty("--opening-percentage", newAnimPercent)
-    newBtn.focus()
-
-    const onMouseLeave = () => {
-      newBtn.blur()
-      newBtn.removeEventListener("mouseleave", onMouseLeave)
-    }
-    newBtn.addEventListener("mouseleave", onMouseLeave)
-  })
+  editOverlayOpen.value = !editOverlayOpen.value
 }
 
 const characterLoaded = computed(() => currentCharacter.value != null)
 
-// Create an object like this: { groupName1: false, (...) }
-const expandedGroups = reactive(Object.fromEntries(Object.keys(talentGroups).map(name => [name, false])))
+const expandedGroups = ref({})
 const expandedAttributes = ref(false)
+
+function toggleGroupExpanded (groupName) {
+  if (expandedGroups.value[groupName]) delete expandedGroups.value[groupName]
+  else expandedGroups.value[groupName] = true
+}
 
 const showInactiveTalents = ref(false)
 const talentSearch = ref("")
@@ -579,7 +544,7 @@ function getItems (groupName) {
 
   if (!currentCharacter.value) return result
 
-  const expanded = expandedGroups[groupName]
+  const expanded = expandedGroups.value[groupName]
   const re = new RegExp(talentSearch.value, "i")
 
   const matches = Object.values(currentCharacter.value.talents)
@@ -660,7 +625,7 @@ function deleteCharacter () {
   store.deleteCharacter(currentCharacter.value.generalData.key)
 
   deleteEnabled.value = false
-  toggleEditCharacter()
+  editOverlayOpen.value = false
 }
 // #endregion
 
@@ -773,6 +738,7 @@ function onTokenItemClick (id) {
   position: absolute;
   height: var(--max-heigt, 0px);
   overflow: hidden;
+  visibility: hidden;
 }
 .character-content-wrapper {
   position: relative;
@@ -780,7 +746,7 @@ function onTokenItemClick (id) {
 }
 .sticky-search {
   position: sticky;
-  top: 0;
+  top: 8px;
   z-index: 3;
 }
 .sticky-heading {
@@ -793,20 +759,6 @@ function onTokenItemClick (id) {
   right: 32px;
 
   z-index: 3;
-  // Remove the transform applied with an active footer, don't need it since the
-  // parent will not extend below the footer due to scrolling parent in Layout!
-  transform: none !important;
-}
-
-.fab-enter-active,
-.fab-leave-active {
-  transition: opacity 170ms, transform 200ms;
-}
-
-.fab-enter-from,
-.fab-leave-to {
-  transform: scale(0.7);
-  opacity: 0;
 }
 
 #papers-fab {
@@ -834,7 +786,19 @@ function onTokenItemClick (id) {
     width: 100%;
     background-color: #E5F5FA;
     box-shadow: 1px 1px 1px rgb(0 0 0 / 20%);
-    transition: transform 200ms;
+    transition: transform 200ms, background-color 200ms;
+  }
+  &:focus-within {
+    &::before,
+    &::after {
+      background-color: $primary;
+    }
+    &::before {
+      transform: rotate(-4deg);
+    }
+    &::after {
+    transform: rotate(5deg);
+  }
   }
   &::before {
     z-index: -1;
@@ -881,29 +845,40 @@ function onTokenItemClick (id) {
   }
 }
 
-.extra-roll-button {
-  flex: 1;
-
-  i {
-    display: none;
-  }
-
-  &:hover {
-    flex: 100;
-    i {
-      display: revert;
-    }
-  }
-}
-
 .char-edit-list {
   position: absolute;
   inset: 0;
   background: white;
   z-index: 3;
-  /* pointer-events: none; */
+}
 
-  clip-path: circle(var(--opening-percentage, 0%) at var(--x, 0) var(--y, 0));
+/* #region vue transitions */
+.overlay-enter-active {
+  animation: overlay-reveal 300ms;
+}
+.overlay-leave-active {
+  animation: overlay-reveal 200ms reverse;
+}
+@keyframes overlay-reveal {
+  0% { clip-path: circle(1% at v-bind(animX) v-bind(animY)) }
+  100% { clip-path: circle(200vmax at v-bind(animX) v-bind(animY)) }
+}
+
+.fab-enter-active {
+  animation: fab-reveal 200ms;
+}
+.fab-leave-active {
+  animation: fab-reveal 200ms reverse;
+}
+@keyframes fab-reveal {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* list-... maps to the name attribute of the TransitionGroup above */
@@ -921,5 +896,7 @@ function onTokenItemClick (id) {
   /* Negative margin should be approx. as big as the element is high */
   margin-top: var(--negative-margin, -37px);
 }
+
+/* #endregion */
 
 </style>
