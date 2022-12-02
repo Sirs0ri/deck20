@@ -70,7 +70,7 @@
                 />
               </q-avatar>
             </q-item-section>
-            <q-item-section class="text-bold">
+            <q-item-section class="text-body1">
               Eigenschaften
             </q-item-section>
             <q-item-section side>
@@ -129,7 +129,7 @@
                 />
               </q-avatar>
             </q-item-section>
-            <q-item-section class="text-bold">
+            <q-item-section class="text-body1">
               {{ group.name }}
             </q-item-section>
             <q-item-section side>
@@ -159,11 +159,15 @@
               </q-avatar>
             </q-item-section>
             <q-item-section class="col">
-              {{ talent.name }}
-              {{ talent.specializations?.length ? '*' : '' }}
-              {{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}{{ talent.value != null ? ':' : '' }}
+              <q-item-label>
+                {{ talent.name }}
+                {{ talent.specializations?.length ? '*' : '' }}
+              </q-item-label>
+              <q-item-label caption>
+                {{ talent.attributes ? ` (${talent.attributes?.join("/")})` : '' }}
+              </q-item-label>
             </q-item-section>
-            <q-item-section class="col-auto text-right q-pr-md">
+            <q-item-section class="col-auto text-right q-pr-md" style="font-size: 1.15em">
               {{ talent.value }}
             </q-item-section>
 
@@ -283,7 +287,7 @@
                 autofocus
                 label="Name"
                 outlined
-                class="full-width"
+                class="full-width bg-active-primary"
                 clearable
                 clear-icon="sym_r_undo"
                 @clear="currentCharacter.generalData.name = characterNameBackup"
@@ -743,6 +747,7 @@ function onTokenItemClick (id) {
 .character-content-wrapper {
   position: relative;
   max-width: 100%;
+  flex-grow: 1;
 }
 .sticky-search {
   position: sticky;

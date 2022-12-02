@@ -79,7 +79,7 @@ const GROUPS = {
 export const talentGroups = {
   [GROUPS.OTHER]: {
     name: GROUPS.OTHER,
-    icon: "sym_r_star",
+    icon: "sym_r_magic_button",
     talents: [],
   },
   [GROUPS.COMBAT]: {

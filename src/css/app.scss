@@ -1,6 +1,27 @@
 // app global css in SCSS form
 @use "sass:color";
 
+@font-face {
+  font-family: Atkinson-Hyperlegible;
+  src: url(./fonts/AtkinsonHyperlegible-Regular.ttf);
+}
+@font-face {
+  font-family: Atkinson-Hyperlegible;
+  src: url(./fonts/AtkinsonHyperlegible-Bold.ttf);
+  font-weight: bold;
+}
+@font-face {
+  font-family: Atkinson-Hyperlegible;
+  src: url(./fonts/AtkinsonHyperlegible-Italic.ttf);
+  font-style: italic;
+}
+@font-face {
+  font-family: Atkinson-Hyperlegible;
+  src: url(./fonts/AtkinsonHyperlegible-BoldItalic.ttf);
+  font-weight: bold;
+  font-style: italic;
+}
+
 :root {
   --primary-h: #{color.hue($primary)};
   --primary-s: #{color.saturation($primary)};
@@ -10,6 +31,15 @@
 
 html, body, #q-app, .q-layout, .q-page-container {
   height: 100%;
+}
+
+body {
+  font-family: Atkinson-Hyperlegible;
+  text-rendering: optimizeSpeed;
+}
+
+.q-btn {
+  font-size: 1em;
 }
 
 .page-wrapper {
@@ -33,6 +63,10 @@ html, body, #q-app, .q-layout, .q-page-container {
 
 .bg-glassed {
   backdrop-filter: blur(3px);
+}
+
+.bg-glassed,
+.bg-active-primary {
   background: rgba(white, 0.8);
   transition: background-color 200ms;
   
@@ -105,7 +139,7 @@ html, body, #q-app, .q-layout, .q-page-container {
     // Overrides for .q-toggle__inner--truthy
     &--truthy {
       color: hsla(var(--primary-hsl) / 1);
-      
+
       .q-toggle__track {
         outline-color: currentColor;
         opacity: 1;
