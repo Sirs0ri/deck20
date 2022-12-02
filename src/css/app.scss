@@ -1,4 +1,12 @@
 // app global css in SCSS form
+@use "sass:color";
+
+:root {
+  --primary-h: #{color.hue($primary)};
+  --primary-s: #{color.saturation($primary)};
+  --primary-l: #{color.lightness($primary)};
+  --primary-hsl: var(--primary-h) var(--primary-s) var(--primary-l);
+}
 
 html, body, #q-app, .q-layout, .q-page-container {
   height: 100%;
@@ -26,6 +34,11 @@ html, body, #q-app, .q-layout, .q-page-container {
 .bg-glassed {
   backdrop-filter: blur(3px);
   background: rgba(white, 0.8);
+  transition: background-color 200ms;
+  
+  &:focus-within {
+    background: rgba(color.mix(white, $primary, 97%), 0.8);
+  }
 }
 
 .sticky-top {
@@ -91,6 +104,8 @@ html, body, #q-app, .q-layout, .q-page-container {
 
     // Overrides for .q-toggle__inner--truthy
     &--truthy {
+      color: hsla(var(--primary-hsl) / 1);
+      
       .q-toggle__track {
         outline-color: currentColor;
         opacity: 1;
@@ -119,7 +134,7 @@ html, body, #q-app, .q-layout, .q-page-container {
 .q-btn--fab,
 .header-item {
   border-radius: 16px;
-  color: $primary;
+  color: hsla(var(--primary-hsl) / 1);
 }
 
 .q-fab>.q-btn,
@@ -127,13 +142,16 @@ html, body, #q-app, .q-layout, .q-page-container {
   background-color: white;
 
   &::before {
-    background-color: rgba($primary, 0.1) !important;
+    background-color: hsla(var(--primary-hsl) / 0.1) !important;
   }
+}
+.q-fab .q-btn__content {
+  color: hsla(var(--primary-hsl) / 1);
 }
 .header-item {
   border-radius: 16px;
-  background-color: rgba($primary, 0.1) !important;
-  color: $primary;
+  background-color: hsla(var(--primary-hsl) / 0.1) !important;
+  color: hsla(var(--primary-hsl) / 1);
 }
 .q-fab__actions>.q-btn {
   border-radius: 12px;
@@ -159,4 +177,9 @@ html, body, #q-app, .q-layout, .q-page-container {
 .fadeScale-leave-to {
   opacity: 0;
   transform: scale(0.9);
+}
+
+@keyframes kf-color-mix {
+  0% { background-color: white }
+  100% { background-color: hsla(var(--primary-hsl) / 1) }
 }

@@ -69,14 +69,14 @@ const cornerClasses = computed(() => {
     .background {
       position: absolute;
       inset: calc(-0.5 * var(--gap));
-      background-color: var(--bg-color);
+      background-color: hsla(var(--color-hsl) / 10%);
       background-color: white;
 
       z-index: 4;
 
       &::before {
         content: "";
-        background-color: var(--bg-color);
+        background-color: hsla(var(--color-hsl) / 10%);
         position: absolute;
         inset: 0;
       }
@@ -86,7 +86,7 @@ const cornerClasses = computed(() => {
       content: "";
       position: absolute;
       inset: calc(-0.5 * var(--gap));
-      background-color: var(--border-color);
+      background-color: hsla(var(--color-hsl));
     }
 
     /* #region borders */
@@ -176,7 +176,7 @@ const cornerClasses = computed(() => {
         width: calc(2 * var(--cell-border-radius));
         height: calc(2 * var(--cell-border-radius));
         box-shadow: 0 0 0 calc(2 * var(--cell-border-radius)) white;
-        outline: calc(2 * var(--cell-border-radius)) solid var(--border-color);
+        outline: calc(2 * var(--cell-border-radius)) solid hsla(var(--color-hsl));
       }
       .background::after {
         content: "";
@@ -185,7 +185,7 @@ const cornerClasses = computed(() => {
         width: calc(2 * var(--cell-border-radius));
         height: calc(2 * var(--cell-border-radius));
         box-shadow: 0 0 0 calc(2 * var(--cell-border-radius)) white;
-        outline: calc(2 * var(--cell-border-radius)) solid var(--bg-color);
+        outline: calc(2 * var(--cell-border-radius)) solid hsla(var(--color-hsl) / 0.1);
       }
 
     }

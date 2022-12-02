@@ -398,11 +398,11 @@
           @click="handleFabClick"
         >
           <template #icon>
-            <q-icon color="primary" :name="characterLoaded ? 'sym_r_sync': 'sym_r_file_upload'" />
+            <q-icon :name="characterLoaded ? 'sym_r_sync': 'sym_r_file_upload'" />
           </template>
 
           <template #active-icon>
-            <q-icon color="primary" name="sym_r_close" />
+            <q-icon name="sym_r_close" />
           </template>
 
           <q-fab-action
@@ -411,7 +411,6 @@
             square
             external-label
             color="white"
-            text-color="primary"
             icon="sym_r_mood"
             :label="c.generalData.name"
             label-class="bg-grey-3 text-grey-8 text-caption"
@@ -421,7 +420,6 @@
           <q-fab-action
             external-label
             color="white"
-            text-color="primary"
             icon="sym_r_upload_file"
             label="Importieren"
             label-class="bg-grey-3 text-grey-8 text-caption icon-md-filled"
@@ -734,6 +732,8 @@ function onTokenItemClick (id) {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:color";
+
 .hidden {
   position: absolute;
   height: var(--max-heigt, 0px);
@@ -784,41 +784,54 @@ function onTokenItemClick (id) {
     position: absolute;
     height: 100%;
     width: 100%;
-    background-color: #E5F5FA;
-    box-shadow: 1px 1px 1px rgb(0 0 0 / 20%);
-    transition: transform 200ms, background-color 200ms;
-  }
-  &:focus-within {
-    &::before,
-    &::after {
-      background-color: $primary;
-    }
-    &::before {
-      transform: rotate(-4deg);
-    }
-    &::after {
-    transform: rotate(5deg);
-  }
+    z-index: -1;
+    background-color: white;
+    --primary-color-blend: 0.1;
+    // Inset dropshadow without blur to blend PRIMARY onto white
+    box-shadow: inset 0px 0px 100px hsla(var(--primary-hsl) / var(--primary-color-blend));
+    // Actual shadow
+    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.2));
+    animation-delay: -10s;
+    transition: transform 200ms, box-shadow 200ms;
+    // (base + [extra|0deg]) * [factor|1]
+    transform: rotate(calc((var(--base-rotation) + var(--extra-rotation, 0deg)) * var(--rotation-factor, 1)))
   }
   &::before {
-    z-index: -1;
     right: 7px;
     top: -3px;
-    transform: rotate(-3deg);
     transform-origin: 50% 70%;
+    --base-rotation: 3deg;
+    --rotation-factor: -1.3
   }
   &::after {
     top: 2px;
     right: 2px;
-    transform: rotate(4deg);
-    z-index: -2;
     transform-origin: 60% 80%;
+    --base-rotation: 4deg;
   }
-  &.q-fab--opened::before {
-    transform: rotate(-9deg);
+
+  &:hover, &:focus-within {
+    &::before,
+    &::after {
+      --extra-rotation: 2deg;
+      animation-delay: -20s;
+      --primary-color-blend: 0.2
+    }
   }
-  &.q-fab--opened::after {
-    transform: rotate(7deg);
+
+  &:focus-within {
+    &::before,
+    &::after {
+      /* background-color: hsla(var(--primary-hsl) / 1); */
+      animation-delay: -70s;
+      --primary-color-blend: 1
+    }
+  }
+  &.q-fab--opened {
+    &::before,
+    &::after {
+      --extra-rotation: 4deg;
+    }
   }
 }
 

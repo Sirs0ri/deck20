@@ -312,6 +312,7 @@ function handleDayClick (day, clickEvt) {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:color";
 .calendar {
   --columns: 7;
   --rows: 6;
@@ -319,8 +320,7 @@ function handleDayClick (day, clickEvt) {
   --cell-size: 45px;
   --cell-border-radius: 0.5em;
 
-  --border-color: rgba(25, 118, 210, 0.3);
-  --bg-color: rgba(25, 118, 210, 0.1);
+  --color-hsl: var(--primary-hsl);
 
   display: grid;
   gap: var(--gap);
@@ -354,7 +354,7 @@ function handleDayClick (day, clickEvt) {
     scale: 1;
 
     &.season-icon-top {
-      color: $primary;
+      color: hsl(var(--primary-hsl));
       z-index: 5;
       opacity: 0.05;
     }
@@ -381,7 +381,7 @@ function handleDayClick (day, clickEvt) {
       opacity var(--transition-duration);
 
     &:hover {
-      background-color: rgba($primary, 0.1);
+      background-color: hsla(var(--color-hsl) / 10%);
     }
   }
 

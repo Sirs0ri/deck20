@@ -8,10 +8,7 @@
       </div>
     </q-page-container>
 
-    <q-footer
-      elevated
-      class="bg-primary text-white"
-    >
+    <q-footer elevated>
       <!-- v-if="$q.screen.gt.xs" -->
       <q-tabs
         class="text-white"
@@ -122,6 +119,10 @@ const essentialLinks = computed(() => {
 </script>
 
 <style lang="scss">
+.q-footer {
+  background: hsla(var(--primary-hsl) / 1);
+  color: white;
+}
 .q-tab {
   margin: 4px 0;
   border-radius: 4px;

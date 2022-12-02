@@ -70,19 +70,15 @@ defineProps({
     background-color var(--transition-duration),
     opacity var(--transition-duration);
 
-  /* SCSS vars for rgba(color, alpha) instead of rgba(r, g, b, alpha) */
-  $border-color-today: $primary;
-
   &:hover {
-    background-color: var(--bg-color);
-    border-color: var(--border-color);
+    background-color: hsla(var(--color-hsl) / 0.2);
   }
 
   &.today {
-    background-color: rgba($border-color-today, 0.5);
+    background-color: hsla(var(--color-hsl) / 0.5);
   }
   &.today:hover{
-    border-color: $border-color-today;
+    border-color: hsla(var(--color-hsl) / 0.7);
   }
 
   &.previous-month,
@@ -94,7 +90,7 @@ defineProps({
     }
 
     .today{
-      border-color: rgba($border-color-today, 0.35);
+      border-color: hsla(var(--color-hsl) / 0.35);
     }
   }
 }
