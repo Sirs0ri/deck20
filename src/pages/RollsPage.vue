@@ -39,7 +39,9 @@
                 outline
                 class="icon-md-filled bg-white q-ma-sm"
               >
-                {{ formatDate(roll.msgData.realtimestamp, "date") }}
+                <span style="min-width: 10ch; text-align: center;">
+                  {{ formatDate(roll.msgData.realtimestamp, "date") }}
+                </span>
               </q-chip>
             </div>
             <q-timeline-entry
