@@ -56,11 +56,7 @@
       style="grid-area: hdr / day 6"
       @click="showPreviousMonth"
     >
-      <q-icon
-        size="sm"
-        color="primary"
-        name="sym_r_navigate_before"
-      />
+      <q-icon size="sm" name="sym_r_navigate_before" />
     </div>
 
     <div
@@ -68,11 +64,7 @@
       style="grid-area: hdr / day 7"
       @click="showNextMonth"
     >
-      <q-icon
-        size="sm"
-        color="primary"
-        name="sym_r_navigate_next"
-      />
+      <q-icon size="sm" name="sym_r_navigate_next" />
     </div>
 
     <div class="days-background" />
@@ -382,6 +374,10 @@ function handleDayClick (day, clickEvt) {
 
     &:hover {
       background-color: hsla(var(--color-hsl) / 10%);
+    }
+
+    .q-icon {
+      color: hsl(var(--color-hsl));
     }
   }
 

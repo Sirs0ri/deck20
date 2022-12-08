@@ -68,10 +68,11 @@ body {
 .bg-glassed,
 .bg-active-primary {
   background: rgba(white, 0.8);
-  transition: background-color 200ms;
+  transition: box-shadow 200ms;
   
   &:focus-within {
-    background: rgba(color.mix(white, $primary, 97%), 0.8);
+    // background: rgba(color.mix(white, $primary, 97%), 0.8);
+    box-shadow: inset 0px 0px 100px hsla(var(--primary-hsl) / 0.03);
   }
 }
 
@@ -195,6 +196,14 @@ body {
   width: 100%;
   padding-top: map-get($space-md, "y");
   padding-bottom: map-get($space-md, "y");
+}
+
+.q-field__control {
+  color: hsla(var(--primary-hsl) / 1);
+}
+
+.text-primary {
+  color: hsla(var(--primary-hsl) / 1) !important;
 }
 
 /* Animations, use them with <Transition> elements, usign the name attribute */
