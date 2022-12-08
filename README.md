@@ -2,6 +2,8 @@
 
 Connect Roll20 to a Stream-Deck, and add some DSA related helpers, like a calendar, or parsing of a "Helden Software" character sheet from XML
 
+![A collage of three screenshots from this browser extension for the tabletop RPG "Das Schwarze Auge". The UI is in German. Screen 1 shows a timeline of skill checks, listing the skill's name and additional info: how successful it was, and when it happened. At the bottom you can see a hint of what the roll would have looked like in roll20's chat system. Screen 2 contains a calendar of the fictional world we're playing in, with one day marked as "today". A mouse cursor is hovering over one of the days and reveals more info, like the week day "Praiostag" and the current moon phase "Helm". Screen 3 shows a list of the skills my character "Kilho" has, sorted in groups. There's a "floating action button" in the bottom right that looks like a stack of papers, that can be used to switch between characters.](https://user-images.githubusercontent.com/6765536/206564542-bb7c9327-d272-4734-be84-0c8605f2a453.png)
+
 ## Disclaimer
 
 This extension is a side-project, developed when I have some free time. Use at your own risk. It currently supports Chrome, and should work on chromium-based browsers.
