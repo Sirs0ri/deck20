@@ -38,14 +38,14 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
   log("active", Date.now(), { serverActive })
 
   function sendMessageToRoll20Dom ({ command, data }) {
+    data._pathing = {
+      src: "background",
+      dst: "dom",
+      lastFwd: "background",
+    }
     bridge.send("bridge-forward", {
       command,
       data,
-      pathing: {
-        src: "background",
-        dst: "dom",
-        lastFwd: "background",
-      },
     })
   }
 
