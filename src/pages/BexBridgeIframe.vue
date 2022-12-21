@@ -23,6 +23,13 @@ const log = (...args) => {
 
 log("active", Date.now())
 
+addEventListener("visibilitychange", (evt) => {
+  if (document.visibilityState === "visible") {
+    log("reloading iFrame")
+    window.location.reload()
+  }
+})
+
 const $q = useQuasar()
 
 const { bexOn } = useBridge($q.bex)
