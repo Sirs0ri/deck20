@@ -16,8 +16,7 @@ const log = (...args) => {
 
 // #region ========== BEX INJECTION ==========
 
-const
-  iFrame = document.createElement("iframe")
+const iFrame = document.createElement("iframe")
 // const defaultFrameHeight = "600px"
 const defaultFrameHeight = "32px"
 
