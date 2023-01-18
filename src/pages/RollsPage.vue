@@ -14,6 +14,16 @@
         </q-item-section>
       </q-item>
 
+      <q-item>
+        <apexchart
+          :type="acType"
+          :series="series"
+          :width="acWidth"
+          :height="acHeight"
+          :options="acOptions"
+        />
+      </q-item>
+
       <q-timeline color="primary">
         <q-infinite-scroll @load="(_, done) =>loadMoreItems(false, done)">
           <template #loading>
@@ -123,12 +133,14 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, computed } from "vue"
 import { scroll } from "quasar"
+import { storeToRefs } from "pinia"
 
 import { dbPromise } from "src/boot/idb"
 import { TABLE_NAME_ROLLS } from "src/utils/constants"
 import { formatDate, sleep } from "src/utils/helpers"
 import { useBridge } from "src/utils/bexBridge"
 
+import { useCharacterStore } from "src/stores/characters-store"
 const root = ref(null)
 
 // #region ========== IDB QUERIES ==========
@@ -325,6 +337,108 @@ function itemHasNewDate (index) {
 
   return isDifferent
 }
+// #endregion
+
+// #region ========== Graph ==========
+
+const store = useCharacterStore()
+const { currentCharacter } = storeToRefs(store)
+
+const acType = ref("radar")
+const acWidth = ref("100%")
+const acHeight = ref("auto")
+
+const series = computed(() => {
+  console.log("items", items.value)
+  console.log("currentCharacter", currentCharacter.value)
+  if (!currentCharacter.value) return []
+
+  const attributeObj = {
+    MU: { total: 0, successes: 0, value: 0 },
+    KL: { total: 0, successes: 0, value: 0 },
+    IN: { total: 0, successes: 0, value: 0 },
+    CH: { total: 0, successes: 0, value: 0 },
+    FF: { total: 0, successes: 0, value: 0 },
+    GE: { total: 0, successes: 0, value: 0 },
+    KO: { total: 0, successes: 0, value: 0 },
+    KK: { total: 0, successes: 0, value: 0 },
+  }
+
+  Object.values(currentCharacter.value.attributes).forEach(({ short, value }) => {
+    if (attributeObj[short]) attributeObj[short].value = value
+  })
+
+  console.log(attributeObj)
+
+  for (const item of items.value) {
+    if (!item.talent) continue // TODO: Attribute rolls
+
+    console.log(item)
+
+    const attributes = item.talent.attributes
+
+    for (let index = 0; index < attributes.length; index++) {
+      const attr = attributes[index]
+      attributeObj[attr].total++
+      const roll = item.msgData.inlinerolls[index]
+      if (roll.results.total <= attributeObj[attr].value) attributeObj[attr].successes++
+    }
+  }
+  const totalData = Object.values(attributeObj).map(item => item.total)
+  const maxCount = Math.max(...totalData)
+  const successData = Object.values(attributeObj).map(item => item.total ? item.successes / item.total * maxCount : maxCount)
+  const successAbsoluteData = Object.values(attributeObj).map(item => item.successes)
+  return [
+    {
+      max: maxCount,
+      name: "Erfolge",
+      data: successData,
+      absoluteData: successAbsoluteData,
+    },
+    {
+      max: maxCount,
+      name: "Würfe gesamt",
+      data: totalData,
+    },
+  ]
+})
+
+const acOptions = computed(() => ({
+  yaxis: [
+    {
+      show: false,
+      labels: {
+        formatter: (value, index) => {
+          console.log(series.value)
+          if (!index) return ""
+          return `${series.value[0].absoluteData[index.dataPointIndex]} / ${series.value[1].data[index.dataPointIndex]}`
+        },
+      },
+      max: (m) => {
+        console.log("max0", m, series.value, series.value.length ? series.value[0].max : 1)
+        return series.value.length ? series.value[0].max : 0
+        // return -1
+      },
+    },
+    {
+      max: (m) => {
+        console.log("max1", m, series.value, series.value.length ? series.value[1].max : 1)
+        return series.value.length ? series.value[1].max : 0
+        // return -1
+      },
+    },
+  ],
+  labels: ["MU", "KL", "IN", "CH", "FF", "GE", "KO", "KK"],
+  markers: {
+    size: 3,
+    hover: { size: 10 },
+  },
+  chart: {
+    toolbar: { show: false },
+  },
+  legend: { position: "right" },
+}))
+
 // #endregion
 </script>
 
