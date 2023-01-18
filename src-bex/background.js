@@ -200,6 +200,10 @@ export default bexBackground((bridge /* , allActiveConnections */) => {
     evt.respond()
   })
 
+  bridge.on("ping", evt => {
+    evt.respond({ now: Date.now() })
+  })
+
   // Forward messages from the UI to the dom, via the content script
   // ui -> background -> content -> dom
   const PREV_BRIDGE_STEPS = ["ui"]

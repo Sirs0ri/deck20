@@ -11,7 +11,8 @@ import { storeToRefs } from "pinia"
 import { useCharacterStore } from "src/stores/characters-store"
 import { useRollsStore } from "src/stores/rolls-store"
 import { useBridge } from "src/utils/bexBridge"
-import { onBeforeUnmount, onMounted } from "vue"
+import { onBeforeUnmount, onMounted, ref } from "vue"
+import { sleep } from "src/utils/helpers"
 
 /** Wrapper for console.log that adds a "[bex] iframe" prefix infront of the logged message
  *
@@ -23,16 +24,16 @@ const log = (...args) => {
 
 log("active", Date.now())
 
-addEventListener("visibilitychange", (evt) => {
-  if (document.visibilityState === "visible") {
-    log("reloading iFrame")
-    window.location.reload()
-  }
-})
+// addEventListener("visibilitychange", (evt) => {
+//   if (document.visibilityState === "visible") {
+//     log("reloading iFrame")
+//     window.location.reload()
+//   }
+// })
 
 const $q = useQuasar()
 
-const { bexOn } = useBridge($q.bex)
+const { bexOn, bexSend } = useBridge($q.bex)
 
 const charStore = useCharacterStore()
 const { currentCharacter } = storeToRefs(charStore)
@@ -153,12 +154,46 @@ async function getRollFromIdb (id) {
 onMounted(() => {
   window.deck20_add_roll = sendRollToIdb
   window.deck20_get_roll = getRollFromIdb
+
+  startPinging()
 })
 
 onBeforeUnmount(() => {
   delete window.deck20_add_roll
   delete window.deck20_get_roll
+
+  stopPinging()
 })
+
+const interval = ref(null)
+function startPinging () {
+  interval.value = setInterval(sendPing, 5000)
+}
+
+function stopPinging () {
+  /* Stop the interval, reset interval.value to undefined */
+  interval.value = clearInterval(interval.value)
+}
+
+function sendPing () {
+  // log("Sending Ping")
+
+  const s = sleep(10).then(() => true)
+  const p = bexSend("ping", {}).then(d => {
+    return d?.data?.now == null
+      ? true
+      : (Date.now() - d.data.now) > 10
+  })
+
+  Promise.race([s, p]).then(timeoutHappened => {
+    log("ping timed out?", timeoutHappened)
+
+    if (!timeoutHappened) return
+
+    log("reloading iFrame")
+    window.location.reload()
+  })
+}
 
 </script>
 
