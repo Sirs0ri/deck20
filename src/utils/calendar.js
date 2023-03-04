@@ -49,7 +49,9 @@ export function getWeekday ({ day, month, year }) {
   const dateError = isDateInvalid({ day, month, year })
   if (dateError) return dateError
 
-  const weekday = (((year - 1) * 365) + ((month - 1) * 30) + day) % 7
+  let weekday = (((year - 1) * 365) + ((month - 1) * 30) + day) % 7
+
+  if (weekday < 0) weekday += 7
 
   return days[weekday]
 }
@@ -58,7 +60,10 @@ export function getMoonphase ({ day, month, year }) {
   const dateError = isDateInvalid({ day, month, year })
   if (dateError) return dateError
 
-  const weekday = (((year - 1) * 365) + ((month - 1) * 30) + day + 22) % 28
+  let weekday = (((year - 1) * 365) + ((month - 1) * 30) + day + 22) % 28
+
+  if (weekday < 0) weekday += 28
+
   return moonPhases[Math.floor(weekday / 7)]
 }
 
