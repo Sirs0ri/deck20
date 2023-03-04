@@ -14,7 +14,13 @@
         </q-item-section>
       </q-item>
 
-      <q-item>
+      <q-expansion-item
+        expand-separator
+        label="Erfolgsquote bei Würfen"
+        :caption="`${totalSuccesses} Erfolge bei ${totalThrows} Würfen (${(totalSuccesses / totalThrows * 100).toFixed(1)}%)`"
+        header-class="rounded-borders"
+        :duration="200"
+      >
         <apexchart
           :type="acType"
           :series="series"
@@ -22,7 +28,7 @@
           :height="acHeight"
           :options="acOptions"
         />
-      </q-item>
+      </q-expansion-item>
 
       <q-timeline color="primary">
         <q-infinite-scroll @load="(_, done) =>loadMoreItems(false, done)">
@@ -346,11 +352,9 @@ const { currentCharacter } = storeToRefs(store)
 
 const acType = ref("radar")
 const acWidth = ref("100%")
-const acHeight = ref("auto")
+const acHeight = ref("220px")
 
 const series = computed(() => {
-  console.log("items", items.value)
-  console.log("currentCharacter", currentCharacter.value)
   if (!currentCharacter.value) return []
 
   const attributeObj = {
@@ -368,24 +372,32 @@ const series = computed(() => {
     if (attributeObj[short]) attributeObj[short].value = value
   })
 
-  console.log(attributeObj)
-
   for (const item of items.value) {
-    if (!item.talent) continue // TODO: Attribute rolls
-
-    console.log(item)
-
-    const attributes = item.talent.attributes
-
-    for (let index = 0; index < attributes.length; index++) {
-      const attr = attributes[index]
+    if (item.attribute) {
+      const attr = item.attribute.short
       attributeObj[attr].total++
-      const roll = item.msgData.inlinerolls[index]
-      if (roll.results.total <= attributeObj[attr].value) attributeObj[attr].successes++
+      if (item.success) attributeObj[attr].successes++
+      continue
     }
+
+    if (item.talent) {
+      const attributes = item.talent.attributes
+
+      for (let index = 0; index < attributes.length; index++) {
+        const attr = attributes[index]
+        attributeObj[attr].total++
+        const roll = item.msgData.inlinerolls[index]
+        if (roll.results.total <= attributeObj[attr].value) attributeObj[attr].successes++
+      }
+      continue
+    }
+
+    // Note: this shouldn't be used at the moment
+    console.log("other", item)
   }
   const totalData = Object.values(attributeObj).map(item => item.total)
   const maxCount = Math.max(...totalData)
+  // const successData = Object.values(attributeObj).map(item => item.total ? item.successes : maxCount)
   const successData = Object.values(attributeObj).map(item => item.total ? item.successes / item.total * maxCount : maxCount)
   const successAbsoluteData = Object.values(attributeObj).map(item => item.successes)
   return [
@@ -403,29 +415,37 @@ const series = computed(() => {
   ]
 })
 
+const maxCount = computed(() => {
+  if (!series.value.length) return
+
+  return series.value[0].max
+})
+
+const totalThrows = computed(() => {
+  if (!series.value.length) return NaN
+
+  return series.value[1].data.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+})
+
+const totalSuccesses = computed(() => {
+  if (!series.value.length) return NaN
+
+  return series.value[0].absoluteData.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+})
+
 const acOptions = computed(() => ({
   yaxis: [
     {
+      min: 0,
+      decimalsInFloat: 0,
       show: false,
       labels: {
         formatter: (value, index) => {
-          console.log(series.value)
           if (!index) return ""
           return `${series.value[0].absoluteData[index.dataPointIndex]} / ${series.value[1].data[index.dataPointIndex]}`
         },
       },
-      max: (m) => {
-        console.log("max0", m, series.value, series.value.length ? series.value[0].max : 1)
-        return series.value.length ? series.value[0].max : 0
-        // return -1
-      },
-    },
-    {
-      max: (m) => {
-        console.log("max1", m, series.value, series.value.length ? series.value[1].max : 1)
-        return series.value.length ? series.value[1].max : 0
-        // return -1
-      },
+      max: maxCount.value,
     },
   ],
   labels: ["MU", "KL", "IN", "CH", "FF", "GE", "KO", "KK"],
