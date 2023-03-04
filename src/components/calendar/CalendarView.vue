@@ -67,9 +67,39 @@
       <q-icon size="sm" name="sym_r_navigate_next" />
     </div>
 
-    <div class="days-background" />
+    <div
+      v-show="manualDateEntry"
+      class="manual-entry-background"
+    />
 
-    <div style="display: contents;">
+    <div
+      v-if="currentView"
+      v-show="manualDateEntry"
+      class="manual-entry-foreground"
+    >
+      <q-select
+        ref="currentMonthInput"
+        v-model="currentView.month"
+        :options="months.map(m => ({label: `${m.index} - ${m.name}`, value: m.index}))"
+        emit-value
+        map-options
+        label="Monat"
+        outlined
+        class="bg-white"
+      />
+      <q-input
+        ref="currentYearInput"
+        v-model.number="currentView.year"
+        type="number"
+        label="Jahr, BF"
+        outlined
+        class="bg-white"
+      />
+    </div>
+
+    <div v-show="!manualDateEntry" class="days-background" />
+
+    <div :style="{display: manualDateEntry ? 'none': 'contents'}">
       <DayBackground
         v-for="(day, i) in currentViewDays"
         :key="`day_${i}`"
@@ -77,7 +107,7 @@
         :style="{gridArea: day.gridArea}"
       />
     </div>
-    <div style="display: contents;">
+    <div :style="{display: manualDateEntry ? 'none': 'contents'}">
       <DayCell
         v-for="(day, i) in currentViewDays"
         :key="`day_${i}`"
@@ -92,7 +122,36 @@
       class="footer grid-button"
       @click="showToday"
     >
+      <q-icon
+        name="sym_r_step_into"
+        :style="jumpToIconStyle"
+        size="sm"
+      />
       {{ getFormattedDate(store.today, 'short') }}
+      <q-tooltip
+        class="text-center text-body2"
+        transition-show="jump-down"
+        transition-hide="fade"
+        :delay="500"
+      >
+        zurück zu "heute"
+      </q-tooltip>
+    </div>
+
+    <div
+      class="grid-button"
+      style="grid-area: ftr / day 7"
+      @click="toggleDateEntry"
+    >
+      <q-icon size="sm" :name="toggleDateEntryIcon" />
+      <q-tooltip
+        class="text-center text-body2"
+        transition-show="jump-down"
+        transition-hide="fade"
+        :delay="500"
+      >
+        {{ manualDateEntry ? "zum Kalender" : "Datum eingeben" }}
+      </q-tooltip>
     </div>
   </div>
 </template>
@@ -122,6 +181,7 @@ const { today } = storeToRefs(store)
 store.restoration.then(() => showToday())
 
 // ========== UI TOOLS ==========
+// #region ui
 const currentView = ref(null)
 
 const slide = ref("bf")
@@ -206,6 +266,19 @@ const seasonIcons = [
   "sym_r_sunny",
 ]
 
+const jumpToIconStyle = computed(() => {
+  const rotationPast = "transform: rotate(-0.25turn)"
+  const rotationFuture = "transform: rotate(0.25turn)"
+
+  if (today.value.year > currentView.value.year) return rotationPast
+  if (today.value.year < currentView.value.year) return rotationFuture
+
+  if (today.value.month > currentView.value.month) return rotationPast
+  if (today.value.month < currentView.value.month) return rotationFuture
+
+  return ""
+})
+
 /** Get an icon for the meterological (not astronomical) season. */
 const seasonIcon = computed(() => {
   if (!currentView.value) return ""
@@ -232,14 +305,29 @@ const seasonIcon = computed(() => {
       return ""
   }
 })
+// #endregion
 
 // ========== NAVIGATION ==========
+// #region nav
 
 function onWheel (evt) {
+  // if (manualDateEntry.value) return
   const targetClassList = evt.target.classList
-  if (!targetClassList.contains("date-cell") && !targetClassList.contains("days-background")) return
-
   const { deltaY, deltaX } = evt
+
+  if (currentYearInput.value.$el.contains(evt.target)) {
+    if (deltaY > 0) showNextYear()
+    else if (deltaY < 0) showPreviousYear()
+    return
+  }
+
+  if (currentMonthInput.value.$el.contains(evt.target)) {
+    if (deltaY > 0) showNextMonth()
+    else if (deltaY < 0) showPreviousMonth()
+    return
+  }
+
+  if (!targetClassList.contains("date-cell") && !targetClassList.contains("days-background")) return
 
   if (deltaY > 0) showNextMonth()
   else if (deltaY < 0) showPreviousMonth()
@@ -278,7 +366,9 @@ function showPreviousYear () {
 function showToday () {
   currentView.value = { ...today.value, day: 1 }
 }
+// #endregion
 
+// #region editing
 let doubleClick = false
 function handleDayClick (day, clickEvt) {
   // if CTRL is held, a doubleclick changes "today"
@@ -301,6 +391,15 @@ function handleDayClick (day, clickEvt) {
   }
 }
 
+const manualDateEntry = ref(false)
+function toggleDateEntry () {
+  manualDateEntry.value = !manualDateEntry.value
+}
+const toggleDateEntryIcon = computed(() => manualDateEntry.value ? "sym_r_calendar_month" : "sym_r_edit_calendar")
+
+const currentYearInput = ref(null)
+const currentMonthInput = ref(null)
+// #endregion
 </script>
 
 <style lang="scss" scoped>
@@ -383,7 +482,7 @@ function handleDayClick (day, clickEvt) {
 
   .header {
     grid-row: hdr;
-    grid-column: hdr / span 5;
+    grid-column: hdr / span calc(var(--columns) - 2);
     padding: 0.5em;
     display: flex;
     justify-content: center;
@@ -393,8 +492,58 @@ function handleDayClick (day, clickEvt) {
     grid-area: days;
   }
   .footer {
-    grid-area: ftr;
+    grid-row: ftr;
+    grid-column: ftr / span calc(var(--columns) - 1);
     padding: 0.5em;
+
+    position: relative;
+
+    .q-icon {
+      font-size: 24px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      aspect-ratio: 1;
+      width: auto;
+
+      transform: rotate(0);
+      transition: transform 200ms;
+    }
+  }
+
+  .manual-entry-background {
+    grid-area: days;
+
+    margin: calc(-1 * var(--gap));
+    border: 2px solid hsla(var(--color-hsl));
+    border-radius: calc(var(--gap) + var(--cell-border-radius));
+    background-color: white;
+    z-index: 4;
+
+    position: relative;
+
+    &::before {
+      content: "";
+      inset: 0;
+      background-color: hsla(var(--color-hsl)/10%);
+      position: absolute;
+      display: block;
+      z-index: -1;
+    }
+  }
+
+  .manual-entry-foreground {
+    grid-area: days;
+
+    z-index: 5;
+    position: relative;
+
+    padding: 1em;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
   }
 }
 
