@@ -508,7 +508,7 @@ const currentMonthInput = ref(null)
       width: auto;
 
       transform: rotate(0);
-      transition: transform 200ms;
+      transition: transform 200ms cubic-bezier(0.42, 0, 0.29, 1.4);
     }
   }
 

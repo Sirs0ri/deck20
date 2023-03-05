@@ -68,7 +68,8 @@ defineProps({
   transition:
     border-color var(--transition-duration),
     background-color var(--transition-duration),
-    opacity var(--transition-duration);
+    opacity var(--transition-duration),
+    border-radius var(--transition-duration);
 
   &:hover {
     background-color: hsla(var(--color-hsl) / 0.2);
@@ -76,6 +77,8 @@ defineProps({
 
   &.today {
     background-color: hsla(var(--color-hsl) / 0.5);
+    border-radius: 50%;
+    margin: -2px;
   }
   &.today:hover{
     border-color: hsla(var(--color-hsl) / 0.7);
