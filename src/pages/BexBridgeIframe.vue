@@ -143,7 +143,11 @@ function sendRollToIdb (data) {
     // TODO: Set this also if /talktomyself was on
     data.debug = true
   }
-  if (data?.msgData) rollStore.addRoll(data)
+  if (data?.msgData) {
+    const { key = "", name = "" } = currentCharacter.value.generalData ?? {}
+    data._activeCharacter = { key, name }
+    rollStore.addRoll(data)
+  }
 }
 bexOn("persist-roll", ({ data }) => sendRollToIdb(data))
 

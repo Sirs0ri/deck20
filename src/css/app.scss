@@ -76,6 +76,10 @@ body {
   }
 }
 
+.bg-primary {
+  background: hsl(var(--primary-hsl)) !important;
+}
+
 .sticky-top {
   position: sticky;
   top: 0;

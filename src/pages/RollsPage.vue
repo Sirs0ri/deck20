@@ -14,13 +14,65 @@
         </q-item-section>
       </q-item>
 
+      <q-item
+        class="rounded-borders"
+        clickable
+        @click="loadingOptionsShown = !loadingOptionsShown"
+      >
+        <q-item-section avatar>
+          <q-icon name="sym_r_settings" color="blue-grey-4" />
+        </q-item-section>
+        <q-item-section>
+          Filteroptionen
+        </q-item-section>
+        <q-item-section side top>
+          <q-icon
+            name="sym_r_expand_more"
+            :class="{'rotate-180': loadingOptionsShown}"
+            style="transition: transform 100ms"
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item v-if="loadingOptionsShown" :inset-level="1">
+        <q-select
+          v-model="characterFilter"
+          :options="characterOptions"
+          multiple
+          label="nach Charakteren filtern..."
+          class="full-width"
+        />
+      </q-item>
+
+      <q-item v-if="loadingOptionsShown" :inset-level="1">
+        <q-btn
+          label="Anwenden"
+          class="q-ml-auto"
+          color="primary"
+          rounded
+          unelevated
+          @click="() => resetItems()"
+        />
+      </q-item>
+
       <q-expansion-item
         expand-separator
-        label="Erfolgsquote bei Würfen"
-        :caption="`${totalSuccesses} Erfolge bei ${totalThrows} Würfen (${(totalSuccesses / totalThrows * 100).toFixed(1)}%)`"
         header-class="rounded-borders"
         :duration="200"
       >
+        <template #header>
+          <q-item-section avatar>
+            <q-icon name="sym_r_check_circle" color="blue-grey-4" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>
+              Erfolgsquote bei Würfen
+            </q-item-label>
+            <q-item-label caption>
+              {{ totalSuccesses }} Erfolge bei {{ totalThrows }} Würfen ({{ (totalSuccesses / totalThrows * 100).toFixed(1) }}%)
+            </q-item-label>
+          </q-item-section>
+        </template>
         <apexchart
           :type="acType"
           :series="series"
@@ -88,7 +140,11 @@
 
                 <q-item-section v-else-if="roll.attribute">
                   <q-item-label>{{ roll.attribute.name }}</q-item-label>
-                  <q-item-label caption>
+                  <q-item-label v-if="expandedItems[roll.msgData.id]" style="word-break: break-all;">
+                    <!-- eslint-disable-next-line vue/no-v-html -->
+                    <div class="roll-html" v-html="getRollHtml(roll)" />
+                  </q-item-label>
+                  <q-item-label v-else caption>
                     EW: {{ roll.attribute.value }}
                     TaP*: {{ roll.total }}
                     Mod: {{ roll.mod ?? "unbekannt" }}
@@ -149,14 +205,42 @@ import { useBridge } from "src/utils/bexBridge"
 import { useCharacterStore } from "src/stores/characters-store"
 const root = ref(null)
 
+const store = useCharacterStore()
+const { currentCharacter, characters } = storeToRefs(store)
+
 // #region ========== IDB QUERIES ==========
 const items = ref([])
 const loadingItems = ref(false)
+const characterFilter = ref([])
 const cursorSteps = 20
+
+const loadingOptionsShown = ref(false)
+const CHARACTER_FILTER_OTHER = "CHARACTER_FILTER_OTHER"
+
+const characterOptions = computed(() => {
+  const results = [{
+    label: "Andere",
+    value: CHARACTER_FILTER_OTHER,
+  }]
+
+  results.push(...Object.values(characters.value).map(c => ({ label: c.generalData.name, value: c.generalData.key })))
+
+  return results
+})
 
 const firstCursor = ref(null)
 const lastCursor = ref(null)
 const moreItemsAvailable = ref(true)
+
+async function resetItems () {
+  firstCursor.value = null
+  lastCursor.value = null
+  moreItemsAvailable.value = true
+  items.value.length = 0
+  while (moreItemsAvailable.value) {
+    await loadMoreItems()
+  }
+}
 
 /** Load items from the indexedDB, inserting them into `items` in descending order.
  *
@@ -203,11 +287,24 @@ async function loadMoreItems (loadNewest = false, done = null) {
 
   while (cursor) {
     // get the new item
-    if (process.env.DEBUGGING) {
-      newItems.push(cursor.value)
-    } else {
-      if (!cursor.value.debug) newItems.push(cursor.value)
+
+    let loadItem = characterFilter.value.length === 0
+
+    // Check filter
+    if (!loadItem) {
+      // console.log("applying Filter:", characterFilter.value)
+      const charKey = cursor.value._activeCharacter?.key ?? CHARACTER_FILTER_OTHER
+      loadItem = characterFilter.value.some(({ value }) => value === charKey)
     }
+
+    if (loadItem) {
+      if (process.env.DEBUGGING) {
+        newItems.push(cursor.value)
+      } else {
+        if (!cursor.value.debug) newItems.push(cursor.value)
+      }
+    }
+
     // Update last/first cursor value
     if (firstCursor.value == null) firstCursor.value = cursor.key
     else firstCursor.value = Math.max(firstCursor.value, cursor.key)
@@ -246,6 +343,7 @@ async function loadMoreItems (loadNewest = false, done = null) {
       newItems.length = 0
     }
   }
+
   // The last attempt to get a cursor failed, so loading more items wouldn't make sense
   if (!cursor) moreItemsAvailable.value = false
   performance.mark(markerFinished)
@@ -346,9 +444,6 @@ function itemHasNewDate (index) {
 // #endregion
 
 // #region ========== Graph ==========
-
-const store = useCharacterStore()
-const { currentCharacter } = storeToRefs(store)
 
 const acType = ref("radar")
 const acWidth = ref("100%")
@@ -465,6 +560,10 @@ const acOptions = computed(() => ({
 <style lang="scss" scoped>
 // Once again, using :deep to style components used in this page
 // and injected HTML that are out of scope by default
+
+.q-expansion-item :deep(.q-expansion-item__toggle-icon) {
+  transition: transform 100ms;
+}
 
 .q-timeline:deep(.q-timeline__dot) {
   // 24px: default icon width if an "avatar" item section
