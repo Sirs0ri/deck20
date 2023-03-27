@@ -245,16 +245,22 @@ async function resetItems () {
 /** Load items from the indexedDB, inserting them into `items` in descending order.
  *
  * @param {Boolean} loadNewest load more items at the start of the list, ie the ones inserted since the last load
+ * @param {null|(stop: boolean) => {} } done Optional callback to be executed when the loading is done, to be used e.g. with an infinite scroll
  */
 async function loadMoreItems (loadNewest = false, done = null) {
+  if (!moreItemsAvailable.value && !loadNewest) {
+    if (done) done(!moreItemsAvailable.value)
+    return
+  }
+
   const markerInit = "marker_init"
   const markerFinished = "marker_finish"
   const measureLoadingName = "measure loading"
   performance.mark(markerInit)
+
   // Set button state to loading, and prepare a minTimeout after which the loadign state will be reverted
   loadingItems.value = true
   const minTimeout = sleep(300)
-  if (!moreItemsAvailable.value && !loadNewest) return
 
   // get Db
   const db = await dbPromise
