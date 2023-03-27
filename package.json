@@ -20,7 +20,7 @@
     "express": "^4.18.2",
     "idb": "^7.1.1",
     "pinia": "^2.0.32",
-    "quasar": "^2.11.7",
+    "quasar": "^2.11.9",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6",
     "vue3-apexcharts": "^1.4.1"
