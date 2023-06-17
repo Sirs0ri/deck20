@@ -1,4 +1,3 @@
-
 <template>
   <q-avatar size="sm" class="info-avatar">
     <img src="/icons/icosahedron.png">
