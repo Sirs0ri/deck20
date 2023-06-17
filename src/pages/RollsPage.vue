@@ -51,7 +51,7 @@
           color="primary"
           rounded
           unelevated
-          @click="() => resetItems()"
+          @click="resetItems"
         />
       </q-item>
 
@@ -80,6 +80,17 @@
           :height="acHeight"
           :options="acOptions"
         />
+
+        <q-item>
+          <q-btn
+            label="Exportieren"
+            class="q-ml-auto"
+            color="primary"
+            rounded
+            unelevated
+            @click="exportItems"
+          />
+        </q-item>
       </q-expansion-item>
 
       <q-timeline color="primary">
@@ -199,7 +210,7 @@ import { storeToRefs } from "pinia"
 
 import { dbPromise } from "src/boot/idb"
 import { TABLE_NAME_ROLLS } from "src/utils/constants"
-import { formatDate, sleep } from "src/utils/helpers"
+import { formatDate, sleep, exportAsCsv } from "src/utils/helpers"
 import { useBridge } from "src/utils/bexBridge"
 
 import { useCharacterStore } from "src/stores/characters-store"
@@ -370,6 +381,35 @@ const { bexOn } = useBridge()
 bexOn("roll-persisted", () => {
   loadMoreItems(true)
 })
+// #endregion
+
+// #region ========== Export ==========
+
+async function exportItems () {
+  // console.log(items.value.filter(i => i.talent))
+  const exportItems = items.value
+    .filter(i => i.talent)
+    .map(i => ({
+      talent: i.talent.name,
+      TaW: i.talent.value,
+      mod: i.msgData?.original_content?.match(reModifier)?.[1] ?? "unbekannt",
+      "TaP*": i.total,
+      Erfolg: i.success ? 1 : 0,
+      E1: i.talent.attributes[0],
+      "E1 Wurf": i.msgData.inlinerolls[0].results.total,
+      E2: i.talent.attributes[1],
+      "E2 Wurf": i.msgData.inlinerolls[1].results.total,
+      E3: i.talent.attributes[2],
+      "E3 Wurf": i.msgData.inlinerolls[2].results.total,
+    }))
+
+  const characters = characterFilter.value.map(opt => opt.label).join(" ")
+
+  // This'll trigger a file download
+  exportAsCsv(`Rolls ${characters}.csv`, exportItems, [
+    "talent", "TaW", "mod", "TaP*", "Erfolg", "E1", "E1 Wurf", "E2", "E2 Wurf", "E3", "E3 Wurf"])
+}
+
 // #endregion
 
 // #region ========== Scroll-To-Top ==========
