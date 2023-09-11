@@ -14,27 +14,27 @@
     "force-push-deployment": "git push origin `git subtree split --prefix dist/bex main`:release/bex --force"
   },
   "dependencies": {
-    "@quasar/extras": "^1.16.4",
-    "apexcharts": "^3.41.0",
-    "events": "^3.3.0",
-    "express": "^4.18.2",
-    "idb": "^7.1.1",
-    "pinia": "^2.1.4",
-    "quasar": "^2.12.0",
-    "vue": "^3.3.4",
-    "vue-router": "^4.2.2",
-    "vue3-apexcharts": "^1.4.1"
+    "@quasar/extras": "1.16.4",
+    "apexcharts": "3.41.0",
+    "events": "3.3.0",
+    "express": "4.18.2",
+    "idb": "7.1.1",
+    "pinia": "2.1.4",
+    "quasar": "2.12.0",
+    "vue": "3.3.4",
+    "vue-router": "4.2.2",
+    "vue3-apexcharts": "1.4.1"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^1.4.3",
-    "autoprefixer": "^10.4.14",
-    "eslint": "^8.43.0",
-    "eslint-config-standard": "^17.1.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-n": "^16.0.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "eslint-plugin-vue": "^9.14.1",
-    "postcss": "^8.4.24"
+    "@quasar/app-vite": "1.4.3",
+    "autoprefixer": "10.4.14",
+    "eslint": "8.43.0",
+    "eslint-config-standard": "17.1.0",
+    "eslint-plugin-import": "2.27.5",
+    "eslint-plugin-n": "16.0.0",
+    "eslint-plugin-promise": "6.1.1",
+    "eslint-plugin-vue": "9.14.1",
+    "postcss": "8.4.24"
   },
   "engines": {
     "node": "^18 || ^16",
@@ -42,7 +42,7 @@
     "yarn": ">= 1.21.1"
   },
   "resolutions": {
-    "vite": "^4.0.0",
-    "@vitejs/plugin-vue": "^4.0.0"
+    "vite": "4.3.9",
+    "@vitejs/plugin-vue": "4.2.3"
   }
 }
