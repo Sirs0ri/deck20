@@ -14,7 +14,7 @@
     "force-push-deployment": "git push origin `git subtree split --prefix dist/bex main`:release/bex --force"
   },
   "dependencies": {
-    "@quasar/extras": "1.16.4",
+    "@quasar/extras": "1.16.6",
     "apexcharts": "3.42.0",
     "events": "3.3.0",
     "express": "4.18.2",
