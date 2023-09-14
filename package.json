@@ -23,7 +23,7 @@
     "quasar": "2.12.0",
     "vue": "3.3.4",
     "vue-router": "4.2.2",
-    "vue3-apexcharts": "1.4.1"
+    "vue3-apexcharts": "1.4.4"
   },
   "devDependencies": {
     "@quasar/app-vite": "1.4.3",
