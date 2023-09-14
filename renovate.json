@@ -5,8 +5,10 @@
   ],
   "packageRules": [
     {
-      "matchDatasources": ["npm"],
-      "minimumReleaseAge": "5 days",
+      "matchDatasources": [
+        "npm"
+      ],
+      "minimumReleaseAge": "10 days",
       "internalChecksFilter": "strict"
     }
   ]
