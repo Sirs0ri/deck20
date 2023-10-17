@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@quasar/app-vite": "1.4.3",
-    "autoprefixer": "10.4.15",
+    "autoprefixer": "10.4.16",
     "eslint": "8.43.0",
     "eslint-config-standard": "17.1.0",
     "eslint-plugin-import": "2.28.1",
